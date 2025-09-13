@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Adicionar Conta</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <h2>Adicionar Conta Instagram</h2>
+
+    <form method="POST">
+        <label for="username">Usuário:</label>
+        <input type="text" name="username" required>
+        <br><br>
+
+        <label for="ig_user_id">IG User ID:</label>
+        <input type="text" name="ig_user_id" required>
+        <br><br>
+
+        <label for="access_token">Access Token:</label>
+        <input type="text" name="access_token" required>
+        <br><br>
+
+        <button type="submit">Salvar Conta</button>
+    </form>
+
+    <br>
+    <a href="{{ url_for('dashboard') }}">⬅ Voltar ao Dashboard</a>
+</body>
+</html>
