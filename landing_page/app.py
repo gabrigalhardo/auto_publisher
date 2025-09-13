@@ -10,7 +10,7 @@ from instagram.instagram_api import publish_reel, get_all_accounts
 from instagram.tasks import run_scheduled_reels
 
 app = Flask(__name__)
-app.secret_key = "sua_chave_secreta_aqui"
+app.secret_key = "uma_chave_secreta"
 
 # Pasta para salvar uploads temporários
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), "uploads")
