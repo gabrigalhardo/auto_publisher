@@ -304,6 +304,17 @@ form button:hover {
     background-color: var(--primary-hover);
 }
 
+/* Estilo para o link que envolve o botão de conexão */
+.button-link {
+    text-decoration: none;
+    display: block;
+    margin-top: 15px;
+}
+
+.button-link button {
+    width: 100%; /* Faz o botão ocupar toda a largura do link */
+}
+
 /* Custom File Input */
 input[type="file"] {
     background-color: transparent;

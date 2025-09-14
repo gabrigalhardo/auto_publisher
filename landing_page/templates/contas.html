@@ -16,13 +16,11 @@
 {% endwith %}
 
 <div class="card">
-    <h2>Adicionar Conta</h2>
-    <form action="{{ url_for('contas') }}" method="POST">
-        <input type="text" name="username" placeholder="Nome da conta" required>
-        <input type="text" name="ig_user_id" placeholder="IG User ID" required>
-        <input type="text" name="access_token" placeholder="Access Token" required>
-        <button type="submit">Adicionar</button>
-    </form>
+    <h2>Adicionar/Atualizar Conta</h2>
+    <p>Clique no botão abaixo para conectar uma nova conta do Instagram ou para atualizar o token de uma conta existente. Você será redirecionado para o Facebook para autorizar a conexão.</p>
+    <a href="{{ url_for('iniciar_conexao_instagram') }}" class="button-link">
+        <button type="button">Conectar Nova Conta com Facebook</button>
+    </a>
 </div>
 
 <div class="card">
@@ -33,21 +31,22 @@
                 <tr>
                     <th>Nome da Conta</th>
                     <th>IG User ID</th>
-                </tr>
+                    </tr>
             </thead>
             <tbody>
                 {% for conta in contas %}
                 <tr>
-                    <td>{{ conta['username'] }}</td>
-                    <td>{{ conta['ig_user_id'] }}</td>
+                    <td>{{ conta.username }}</td>
+                    <td>{{ conta.ig_user_id }}</td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="2">Nenhuma conta cadastrada.</td>
+                    <td colspan="2" style="text-align: center;">Nenhuma conta cadastrada. Conecte sua primeira conta!</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
+
 {% endblock %}
