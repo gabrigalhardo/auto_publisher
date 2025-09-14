@@ -4,13 +4,16 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+from dotenv import load_dotenv
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from instagram.instagram_api import publish_reel, get_all_accounts
 from instagram.tasks import run_scheduled_reels
 
+load_dotenv()
+
 app = Flask(__name__)
-app.secret_key = "uma_chave_secreta"
+app.secret_key = os.getenv("SECRET_KEY")
 
 # Pasta para salvar uploads temporários
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), "uploads")
@@ -20,10 +23,10 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 # Função para criar a conexão com o banco de dados MySQL
 def get_db():
     return mysql.connector.connect(
-        host='209.38.78.209',
-        user='oldhypex',
-        password='ac9f1b3d87e4a6b2011af235cb8',
-        database='auto_publisher'
+        host=os.getenv("DB_HOST"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD"),
+        database=os.getenv("DB_NAME")
     )
 
 # ================= LOGIN =================
@@ -197,5 +200,4 @@ def logout():
     return redirect(url_for("index"))
 
 if __name__ == "__main__":
-    run_scheduled_reels()  # inicia loop de agendamento
     app.run(debug=True)
