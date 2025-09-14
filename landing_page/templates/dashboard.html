@@ -34,43 +34,6 @@
     </form>
 </section>
 
-<!-- Tabela de publicações -->
-<section class="publicacoes-section">
-    <h2>Publicações e Agendamentos</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Vídeo</th>
-                <th>Legenda</th>
-                <th>Data/Hora</th>
-                <th>Conta</th>
-                <th>Status</th>
-                <th>Ação</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for pub in publicacoes %}
-            <tr>
-                <td>{{ pub['video'] }}</td>
-                <td>{{ pub['legenda'] }}</td>
-                <td>{{ pub['data_hora'] }}</td>
-                <td>{{ pub['username'] }}</td>
-                <td>{{ pub['status'] }}</td>
-                <td>
-                    {% if pub['status'] == 'agendado' %}
-                    <form action="{{ url_for('cancel_agendamento', pub_id=pub['id']) }}" method="POST">
-                        <button type="submit">Cancelar</button>
-                    </form>
-                    {% else %}
-                        -
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</section>
-
 <script>
 flatpickr("input[name=agendamento]", {
     enableTime: true,
