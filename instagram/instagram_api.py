@@ -2,15 +2,19 @@ import os
 import mysql.connector
 import requests
 from datetime import datetime
+from dotenv import load_dotenv
+
+load_dotenv()
 
 GRAPH_API_URL = "https://graph.facebook.com/v18.0"
 
+# Função para criar a conexão com o banco de dados MySQL
 def get_db():
     return mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="",
-        database="auto_publisher"
+        host=os.getenv("DB_HOST"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD"),
+        database=os.getenv("DB_NAME")
     )
 
 def publish_reel(usuario_id, conta_id, video_path, caption, agendamento=None, publicacao_id=None):
