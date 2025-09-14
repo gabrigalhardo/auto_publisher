@@ -315,12 +315,10 @@ form button:hover {
     width: 100%; /* Faz o botão ocupar toda a largura do link */
 }
 
-/* Botão de conexão com o Instagram */
+/* Botão de conexão com o Instagram (versão simplificada sem ícone) */
 .btn-instagram {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px; /* Espaço entre o ícone e o texto */
+    display: block; /* Ocupa a linha inteira */
+    text-align: center; /* Centraliza o texto */
     padding: 12px 20px;
     border-radius: 5px;
     color: white;
@@ -342,10 +340,6 @@ form button:hover {
     color: white;
     transform: scale(1.02); /* Efeito de leve crescimento */
     box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
-}
-
-.btn-instagram svg {
-    height: 1.3em; /* Ajusta o tamanho do ícone */
 }
 
 /* Custom File Input */
