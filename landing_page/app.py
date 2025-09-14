@@ -303,6 +303,33 @@ def callback():
 
     return redirect(url_for('contas'))
 
+# ================= REMOVER CONTA =================
+@app.route("/remover_conta/<int:conta_id>", methods=["POST"])
+@login_required
+def remover_conta(conta_id):
+    db = get_db()
+    cursor = db.cursor()
+    try:
+        # A cláusula "AND usuario_id=%s" é uma camada CRÍTICA de segurança.
+        # Ela garante que um usuário só pode remover uma conta que lhe pertence.
+        cursor.execute(
+            "DELETE FROM contas WHERE id=%s AND usuario_id=%s",
+            (conta_id, current_user.id)
+        )
+        db.commit()
+
+        # cursor.rowcount retorna o número de linhas afetadas. Se for > 0, a exclusão funcionou.
+        if cursor.rowcount > 0:
+            flash("Conta removida com sucesso!")
+        else:
+            flash("Não foi possível remover a conta. Talvez ela não exista ou não pertença a você.")
+    except mysql.connector.Error as err:
+        flash(f"Ocorreu um erro ao remover a conta: {err}")
+    finally:
+        db.close()
+    
+    return redirect(url_for('contas'))
+
 # ================= CANCELAR AGENDAMENTO =================
 @app.route("/cancel_agendamento/<int:pub_id>", methods=["POST"])
 @login_required

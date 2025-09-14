@@ -315,6 +315,39 @@ form button:hover {
     width: 100%; /* Faz o botão ocupar toda a largura do link */
 }
 
+/* Botão de conexão com o Instagram */
+.btn-instagram {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px; /* Espaço entre o ícone e o texto */
+    padding: 12px 20px;
+    border-radius: 5px;
+    color: white;
+    font-weight: bold;
+    font-size: 1rem;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 15px;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+
+    /* O famoso gradiente do Instagram */
+    background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.btn-instagram:hover {
+    color: white;
+    transform: scale(1.02); /* Efeito de leve crescimento */
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+}
+
+.btn-instagram svg {
+    height: 1.3em; /* Ajusta o tamanho do ícone */
+}
+
 /* Custom File Input */
 input[type="file"] {
     background-color: transparent;
