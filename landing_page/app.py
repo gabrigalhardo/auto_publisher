@@ -1,6 +1,7 @@
 import os
 import sys
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, flash
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
 import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
@@ -15,12 +16,12 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY")
 
-# Pasta para salvar uploads temporários
+# Configurações de upload
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), "uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-# Função para criar a conexão com o banco de dados MySQL
+# ================= MYSQL =================
 def get_db():
     return mysql.connector.connect(
         host=os.getenv("DB_HOST"),
@@ -28,6 +29,29 @@ def get_db():
         password=os.getenv("DB_PASSWORD"),
         database=os.getenv("DB_NAME")
     )
+
+# ================= FLASK-LOGIN =================
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "index"  # Página de login
+
+# User class para Flask-Login
+class User(UserMixin):
+    def __init__(self, id, username, email):
+        self.id = id
+        self.username = username
+        self.email = email
+
+@login_manager.user_loader
+def load_user(user_id):
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM usuarios WHERE id=%s", (user_id,))
+    user = cursor.fetchone()
+    db.close()
+    if user:
+        return User(id=user["id"], username=user["username"], email=user["email"])
+    return None
 
 # ================= LOGIN =================
 @app.route("/", methods=["GET", "POST"])
@@ -50,8 +74,8 @@ def index():
                 flash("Seu cadastro ainda não foi liberado!")
                 return redirect(url_for("index"))
 
-            session["user_id"] = user["id"]
-            session["user_email"] = user["email"]
+            user_obj = User(id=user["id"], username=user["username"], email=user["email"])
+            login_user(user_obj)
             return redirect(url_for("dashboard"))
         else:
             flash("Email ou senha incorretos!")
@@ -64,8 +88,8 @@ def index():
 def register():
     if request.method == "POST":
         email = request.form.get("email")
-        senha = request.form.get("password")  # <--- corrigido
-        username = request.form.get("username")  # caso queira salvar o nome de usuário no futuro
+        senha = request.form.get("password")
+        username = request.form.get("username")
 
         if not email or not senha or not username:
             flash("Preencha todos os campos!")
@@ -88,39 +112,39 @@ def register():
 
         return redirect(url_for("index"))
 
-    # renderizar sem menu lateral
     return render_template("register.html", hide_sidebar=True)
 
 # ================= DASHBOARD =================
 @app.route("/dashboard", methods=["GET"])
+@login_required
 def dashboard():
-    if "user_id" not in session:
-        return redirect(url_for("index"))
-
     db = get_db()
     cursor = db.cursor(dictionary=True)
 
     # Buscar publicações do usuário
-    cursor.execute("SELECT p.*, c.username FROM publicacoes p LEFT JOIN contas c ON p.conta_id=c.id WHERE p.usuario_id=%s ORDER BY p.data_hora DESC", (session["user_id"],))
+    cursor.execute("""
+        SELECT p.*, c.username 
+        FROM publicacoes p 
+        LEFT JOIN contas c ON p.conta_id=c.id 
+        WHERE p.usuario_id=%s 
+        ORDER BY p.data_hora DESC
+    """, (current_user.id,))
     publicacoes = cursor.fetchall()
     db.close()
 
     # Buscar contas do usuário
-    contas = get_all_accounts(session["user_id"])
+    contas = get_all_accounts(current_user.id)
 
     return render_template(
         "dashboard.html",
         publicacoes=publicacoes,
-        user_email=session["user_email"],
         contas=contas
     )
 
 # ================= UPLOAD DE VÍDEO =================
 @app.route("/upload_video", methods=["POST"])
+@login_required
 def upload_video():
-    if "user_id" not in session:
-        return redirect(url_for("index"))
-
     video_file = request.files.get("video")
     legenda = request.form.get("legenda")
     agendamento = request.form.get("agendamento")
@@ -134,29 +158,26 @@ def upload_video():
     video_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
     video_file.save(video_path)
 
-    # Publicar ou agendar o vídeo
-    result = publish_reel(session["user_id"], conta_id, video_path, legenda, agendamento)
+    result = publish_reel(current_user.id, conta_id, video_path, legenda, agendamento)
     flash(result)
 
     return redirect(url_for("dashboard"))
 
+# ================= PUBLICAÇÕES =================
 @app.route('/publicacoes')
+@login_required
 def publicacoes():
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
     cursor.execute("SELECT * FROM publicacoes")
     publicacoes = cursor.fetchall()
-    cursor.close()
-    conn.close()
+    db.close()
     return render_template("publicacoes.html", publicacoes=publicacoes)
-
 
 # ================= ADICIONAR CONTAS =================
 @app.route("/contas", methods=["GET", "POST"])
+@login_required
 def contas():
-    if "user_id" not in session:
-        return redirect(url_for("index"))
-
     db = get_db()
     cursor = db.cursor(dictionary=True)
 
@@ -168,15 +189,14 @@ def contas():
         if username and ig_user_id and access_token:
             cursor.execute(
                 "INSERT INTO contas (usuario_id, username, ig_user_id, access_token) VALUES (%s, %s, %s, %s)",
-                (session["user_id"], username, ig_user_id, access_token)
+                (current_user.id, username, ig_user_id, access_token)
             )
             db.commit()
             flash("Conta adicionada com sucesso!")
         else:
             flash("Preencha todos os campos!")
 
-    # Buscar contas do usuário
-    cursor.execute("SELECT id, username, ig_user_id FROM contas WHERE usuario_id=%s", (session["user_id"],))
+    cursor.execute("SELECT id, username, ig_user_id FROM contas WHERE usuario_id=%s", (current_user.id,))
     contas = cursor.fetchall()
     db.close()
 
@@ -184,13 +204,11 @@ def contas():
 
 # ================= CANCELAR AGENDAMENTO =================
 @app.route("/cancel_agendamento/<int:pub_id>", methods=["POST"])
+@login_required
 def cancel_agendamento(pub_id):
-    if "user_id" not in session:
-        return redirect(url_for("index"))
-
     db = get_db()
     cursor = db.cursor()
-    cursor.execute("DELETE FROM publicacoes WHERE id=%s AND usuario_id=%s", (pub_id, session["user_id"]))
+    cursor.execute("DELETE FROM publicacoes WHERE id=%s AND usuario_id=%s", (pub_id, current_user.id))
     db.commit()
     db.close()
     flash("Agendamento cancelado com sucesso!")
@@ -198,8 +216,9 @@ def cancel_agendamento(pub_id):
 
 # ================= LOGOUT =================
 @app.route("/logout")
+@login_required
 def logout():
-    session.clear()
+    logout_user()
     return redirect(url_for("index"))
 
 if __name__ == "__main__":
