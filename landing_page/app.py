@@ -17,16 +17,14 @@ UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), "uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-# Configuração do banco
-db_config = {
-    "host": "localhost",
-    "user": "root",
-    "password": "",
-    "database": "auto_publisher"
-}
-
+# Função para criar a conexão com o banco de dados MySQL
 def get_db():
-    return mysql.connector.connect(**db_config)
+    return mysql.connector.connect(
+        host='209.38.78.209',
+        user='oldhypex',
+        password='ac9f1b3d87e4a6b2011af235cb8',
+        database='auto_publisher'
+    )
 
 # ================= LOGIN =================
 @app.route("/", methods=["GET", "POST"])
