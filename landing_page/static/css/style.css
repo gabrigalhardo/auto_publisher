@@ -12,7 +12,6 @@
    BODY
 =========================== */
 body {
-    display: flex;
     min-height: 100vh;
     background-color: #111;
     color: #eee;
@@ -30,7 +29,7 @@ body {
     padding: 40px;
 }
 
-.login-box {
+.login-box, .register-box {
     background: #1b1b1b;
     padding: 40px;
     border-radius: 10px;
@@ -40,7 +39,7 @@ body {
     text-align: center;
 }
 
-.login-box h2 {
+.login-box h2, .register-box h2 {
     color: #df1949;
     margin-bottom: 25px;
 }
@@ -77,7 +76,7 @@ body {
     color: #df1949;
 }
 
-.login-box button {
+.login-box button, .register-box button {
     background-color: #df1949;
     color: #111;
     border: none;
@@ -90,7 +89,7 @@ body {
     transition: 0.3s;
 }
 
-.login-box button:hover {
+.login-box button:hover, .register-box button:hover {
     background-color: #e61c49;
     color: #fff;
 }
@@ -305,7 +304,9 @@ th {
     }
 }
 
-/* ====== Mostrar/Ocultar senha ====== */
+/* ===========================
+   MOSTRAR / OCULTAR SENHA
+=========================== */
 .password-container {
     position: relative;
 }
