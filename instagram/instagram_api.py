@@ -1,4 +1,4 @@
-# instagram_api.py (versão completa e atualizada)
+# instagram_api.py (versão completa e atualizada com melhor tratamento de erro)
 
 import os
 import mysql.connector
@@ -27,8 +27,6 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
     db = get_db()
     cursor = db.cursor(dictionary=True)
 
-    # CORREÇÃO: Busca a conta e o token usando o ig_user_id, que é o identificador
-    # único que recebemos do frontend e da lógica de agendamento.
     cursor.execute("SELECT * FROM contas WHERE ig_user_id=%s AND usuario_id=%s", (ig_user_id, usuario_id))
     conta = cursor.fetchone()
     if not conta:
@@ -37,7 +35,6 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
 
     access_token = conta['access_token']
 
-    # Se tiver agendamento futuro, salva no banco como 'agendado' e encerra
     if agendamento:
         cursor.execute(
             "INSERT INTO publicacoes (usuario_id, ig_user_id, video, legenda, data_hora, status) VALUES (%s,%s,%s,%s,%s,%s)",
@@ -47,7 +44,6 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
         db.close()
         return "Vídeo agendado com sucesso!"
 
-    # Senão, publica imediatamente
     if not os.path.exists(video_path):
         db.close()
         return "Arquivo de vídeo não encontrado."
@@ -62,8 +58,15 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
 
     upload_url = f"{GRAPH_API_URL}/{ig_user_id}/media"
     res = requests.post(upload_url, files=files, data=params)
+    files['file'].close() # Fechamos o arquivo aqui para liberar recursos
+
+    # CORREÇÃO: Verificamos a resposta da API ANTES de tentar processar como JSON
+    if res.status_code != 200 or not res.text.strip().startswith('{'):
+        db.close()
+        # Retorna uma mensagem de erro mais clara, incluindo o que a API respondeu
+        return f"Erro na API da Meta ao tentar criar mídia. Status: {res.status_code}. Resposta: {res.text}"
+
     res_json = res.json()
-    files['file'].close()
 
     if 'id' not in res_json:
         db.close()
