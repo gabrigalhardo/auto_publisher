@@ -5,7 +5,6 @@
 {% block content %}
 <h1>Gerenciar Contas Instagram</h1>
 
-<!-- Flash messages -->
 {% with messages = get_flashed_messages() %}
   {% if messages %}
     <ul class="flashes">
@@ -16,8 +15,7 @@
   {% endif %}
 {% endwith %}
 
-<!-- Formulário de adicionar conta -->
-<section class="add-conta-section">
+<div class="card">
     <h2>Adicionar Conta</h2>
     <form action="{{ url_for('contas') }}" method="POST">
         <input type="text" name="username" placeholder="Nome da conta" required>
@@ -25,26 +23,31 @@
         <input type="text" name="access_token" placeholder="Access Token" required>
         <button type="submit">Adicionar</button>
     </form>
-</section>
+</div>
 
-<!-- Lista de contas cadastradas -->
-<section class="lista-contas-section">
+<div class="card">
     <h2>Contas Cadastradas</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Nome da Conta</th>
-                <th>IG User ID</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for conta in contas %}
-            <tr>
-                <td>{{ conta['username'] }}</td>
-                <td>{{ conta['ig_user_id'] }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</section>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nome da Conta</th>
+                    <th>IG User ID</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for conta in contas %}
+                <tr>
+                    <td>{{ conta['username'] }}</td>
+                    <td>{{ conta['ig_user_id'] }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="2">Nenhuma conta cadastrada.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 {% endblock %}

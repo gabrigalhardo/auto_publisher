@@ -5,7 +5,6 @@
 {% block content %}
 <h1>Publicações e Agendamentos</h1>
 
-<!-- Flash messages -->
 {% with messages = get_flashed_messages() %}
   {% if messages %}
     <ul class="flashes">
@@ -16,36 +15,44 @@
   {% endif %}
 {% endwith %}
 
-<table>
-    <thead>
-        <tr>
-            <th>Vídeo</th>
-            <th>Legenda</th>
-            <th>Data/Hora</th>
-            <th>Conta</th>
-            <th>Status</th>
-            <th>Ação</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for pub in publicacoes %}
-        <tr>
-            <td>{{ pub['video'] }}</td>
-            <td>{{ pub['legenda'] }}</td>
-            <td>{{ pub['data_hora'] }}</td>
-            <td>{{ pub['username'] if pub.get('username') else '-' }}</td>
-            <td>{{ pub['status'] }}</td>
-            <td>
-                {% if pub['status'] == 'agendado' %}
-                <form action="{{ url_for('cancel_agendamento', pub_id=pub['id']) }}" method="POST">
-                    <button type="submit">Cancelar</button>
-                </form>
+<div class="card">
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Vídeo</th>
+                    <th>Legenda</th>
+                    <th>Data/Hora</th>
+                    <th>Conta</th>
+                    <th>Status</th>
+                    <th>Ação</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pub in publicacoes %}
+                <tr>
+                    <td>{{ pub['video'] | truncate(20) }}</td>
+                    <td>{{ pub['legenda'] | truncate(30) }}</td>
+                    <td>{{ pub['data_hora'] }}</td>
+                    <td>{{ pub['username'] if pub.get('username') else '-' }}</td>
+                    <td>{{ pub['status'] }}</td>
+                    <td>
+                        {% if pub['status'] == 'agendado' %}
+                        <form action="{{ url_for('cancel_agendamento', pub_id=pub['id']) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja cancelar este agendamento?');">
+                            <button type="submit">Cancelar</button>
+                        </form>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
                 {% else %}
-                    -
-                {% endif %}
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+                <tr>
+                    <td colspan="6" style="text-align: center;">Nenhuma publicação encontrada.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 {% endblock %}

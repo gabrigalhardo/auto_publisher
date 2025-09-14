@@ -1,6 +1,17 @@
 /* ===========================
-   RESET BÁSICO
+   VARIÁVEIS DE COR E RESET
 =========================== */
+:root {
+    --primary-color: #df1949;
+    --primary-hover: #e61c49;
+    --dark-bg: #111;
+    --content-bg: #1b1b1b;
+    --sidebar-bg: #222;
+    --text-color: #eee;
+    --text-muted: #aaa;
+    --border-color: #444;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -8,39 +19,44 @@
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* ===========================
-   BODY
-=========================== */
 body {
     min-height: 100vh;
-    background-color: #111;
-    color: #eee;
+    background-color: var(--dark-bg);
+    color: var(--text-color);
+}
+
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+a:hover {
+    color: var(--primary-hover);
 }
 
 /* ===========================
-   LOGIN / REGISTER PAGE
+   PÁGINAS DE LOGIN E REGISTRO
 =========================== */
 .auth-page {
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    width: 100%;
-    padding: 40px;
+    padding: 20px;
 }
 
-.login-box, .register-box {
-    background: #1b1b1b;
+.auth-box {
+    background: var(--content-bg);
     padding: 40px;
     border-radius: 10px;
-    box-shadow: 0 0 15px rgba(230,28,73,0.3);
+    box-shadow: 0 0 20px rgba(223, 25, 73, 0.2);
     width: 100%;
     max-width: 400px;
     text-align: center;
 }
 
-.login-box h2, .register-box h2 {
-    color: #df1949;
+.auth-box h2 {
+    color: var(--primary-color);
     margin-bottom: 25px;
 }
 
@@ -49,14 +65,14 @@ body {
     margin-bottom: 30px;
 }
 
-.user-box input, .user-box textarea {
+.user-box input {
     width: 100%;
-    padding: 10px;
+    padding: 10px 0;
     background: transparent;
     border: none;
-    border-bottom: 1px solid #555;
+    border-bottom: 1px solid var(--border-color);
     outline: none;
-    color: #eee;
+    color: var(--text-color);
     font-size: 16px;
 }
 
@@ -64,230 +80,40 @@ body {
     position: absolute;
     top: 10px;
     left: 0;
-    color: #aaa;
+    color: var(--text-muted);
     pointer-events: none;
     transition: 0.3s;
 }
 
 .user-box input:focus ~ label,
-.user-box input:valid ~ label,
-.user-box textarea:focus ~ label,
-.user-box textarea:valid ~ label {
+.user-box input:valid ~ label {
     top: -15px;
     font-size: 12px;
-    color: #df1949;
+    color: var(--primary-color);
 }
 
-.login-box button, .register-box button {
-    background-color: #df1949;
-    color: #111;
+.auth-box button {
+    background-color: var(--primary-color);
+    color: white;
+    font-weight: bold;
     border: none;
     padding: 12px 20px;
     width: 100%;
     border-radius: 5px;
     font-size: 16px;
-    font-weight: bold;
     cursor: pointer;
     transition: 0.3s;
 }
 
-.login-box button:hover, .register-box button:hover {
-    background-color: #e61c49;
-    color: #fff;
+.auth-box button:hover {
+    background-color: var(--primary-hover);
 }
 
-.register-link {
-    margin-top: 15px;
-    font-size: 14px;
-    color: #ccc;
-}
-
-.register-link a {
-    color: #df1949;
-    text-decoration: none;
-    font-weight: bold;
-}
-
-.register-link a:hover {
-    color: #e61c49;
-}
-
-/* Flash messages */
-.flashes {
-    list-style: none;
-    margin-bottom: 20px;
-}
-
-.flashes li {
-    background-color: #e74c3c;
-    color: #fff;
-    padding: 10px;
-    border-radius: 5px;
-    margin-bottom: 5px;
-}
-
-/* ===========================
-   DASHBOARD
-=========================== */
-.sidebar {
-    width: 220px;
-    background-color: #222;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    position: fixed;
-    height: 100%;
-    top: 0;
-    left: 0;
-}
-
-.sidebar h2 {
-    color: #df1949;
-    text-align: center;
-    margin-bottom: 30px;
-}
-
-.sidebar ul {
-    list-style: none;
-    padding: 0;
-}
-
-.sidebar ul li {
-    margin-bottom: 15px;
-}
-
-.sidebar ul li a {
-    color: #eee;
-    text-decoration: none;
-    padding: 10px;
-    display: block;
-    border-radius: 5px;
-    transition: 0.3s;
-}
-
-.sidebar ul li a:hover,
-.sidebar ul li a.active {
-    background-color: #df1949;
-    color: #fff;
-}
-
-.main-content {
-    margin-left: 240px;
-    padding: 20px;
-    width: calc(100% - 240px);
-}
-
-/* Cabeçalhos */
-h1, h2 {
-    color: #df1949;
-    margin-bottom: 20px;
-}
-
-/* Formulários */
-form {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    background-color: #222;
-    padding: 20px;
-    border-radius: 10px;
-}
-
-textarea {
-    resize: vertical;
-}
-
-button {
-    background-color: #df1949;
-    color: #111;
-    font-weight: bold;
-    cursor: pointer;
-    transition: 0.3s;
-    border: none;
-    padding: 10px;
-    border-radius: 5px;
-}
-
-button:hover {
-    background-color: #e61c49;
-    color: #fff;
-}
-
-/* Tabelas */
-table {
-    width: 100%;
-    border-collapse: collapse;
+.auth-link {
     margin-top: 20px;
-    background-color: #222;
+    color: var(--text-muted);
 }
 
-th, td {
-    padding: 10px;
-    border: 1px solid #444;
-    text-align: left;
-}
-
-th {
-    background-color: #df1949;
-}
-
-/* ===========================
-   RESPONSIVIDADE
-=========================== */
-@media (max-width: 768px) {
-    .sidebar {
-        width: 180px;
-    }
-    .main-content {
-        margin-left: 180px;
-    }
-}
-
-@media (max-width: 500px) {
-    .sidebar {
-        display: none;
-    }
-    .main-content {
-        margin: 0;
-        width: 100%;
-        padding: 10px;
-    }
-}
-
-/* Menu toggle */
-.menu-toggle {
-    display: none;
-    position: fixed;
-    top: 15px;
-    left: 15px;
-    background-color: #df1949;
-    color: #fff;
-    padding: 10px 15px;
-    border-radius: 5px;
-    cursor: pointer;
-    z-index: 1000;
-    font-size: 18px;
-}
-
-@media (max-width: 500px) {
-    .menu-toggle {
-        display: block;
-    }
-    .sidebar {
-        position: fixed;
-        left: -250px;
-        transition: left 0.3s;
-        z-index: 999;
-    }
-    .sidebar.open {
-        left: 0;
-    }
-}
-
-/* ===========================
-   MOSTRAR / OCULTAR SENHA
-=========================== */
 .password-container {
     position: relative;
 }
@@ -299,10 +125,235 @@ th {
     transform: translateY(-50%);
     cursor: pointer;
     font-size: 18px;
-    color: #aaa;
+    color: var(--text-muted);
     user-select: none;
 }
 
-.toggle-password:hover {
-    color: #fff;
+/* ===========================
+   LAYOUT PRINCIPAL (SIDEBAR + CONTEÚDO)
+=========================== */
+.sidebar {
+    width: 240px;
+    background-color: var(--content-bg);
+    padding: 20px;
+    position: fixed;
+    height: 100%;
+    top: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    transition: left 0.3s ease;
+    z-index: 999;
+}
+
+.sidebar h2 {
+    color: var(--primary-color);
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.sidebar ul {
+    list-style: none;
+}
+
+.sidebar ul li a {
+    color: var(--text-color);
+    padding: 12px 15px;
+    display: block;
+    border-radius: 5px;
+    transition: 0.3s;
+    margin-bottom: 10px;
+}
+
+.sidebar ul li a:hover,
+.sidebar ul li a.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.main-content {
+    margin-left: 240px;
+    padding: 30px;
+    width: calc(100% - 240px);
+    transition: margin-left 0.3s ease, width 0.3s ease;
+}
+
+h1, h2 {
+    color: var(--primary-color);
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+/* ===========================
+   COMPONENTES (CARDS, FORMS, TABLES)
+=========================== */
+.card {
+    background-color: var(--content-bg);
+    padding: 25px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+}
+
+.card h2 {
+    margin-top: 0;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 15px;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+form label {
+    font-weight: 500;
+    margin-bottom: -5px;
+}
+
+form input, form select, form textarea {
+    width: 100%;
+    padding: 12px;
+    background-color: #333;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    color: var(--text-color);
+    font-size: 1rem;
+}
+
+form textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+form input:focus, form select:focus, form textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+form button {
+    background-color: var(--primary-color);
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+    border: none;
+    padding: 12px;
+    border-radius: 5px;
+    font-size: 1rem;
+    margin-top: 10px;
+}
+
+form button:hover {
+    background-color: var(--primary-hover);
+}
+
+/* Custom File Input */
+input[type="file"] {
+    background-color: transparent;
+    border: none;
+    padding: 0;
+}
+input[type="file"]::file-selector-button {
+    background-color: #333;
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+input[type="file"]::file-selector-button:hover {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+
+.table-container {
+    overflow-x: auto; /* Garante que a tabela seja rolável em telas pequenas */
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    padding: 15px;
+    border-bottom: 1px solid var(--border-color);
+    text-align: left;
+}
+
+th {
+    background-color: var(--primary-color);
+    color: white;
+    font-weight: 600;
+}
+
+tbody tr {
+    background-color: var(--content-bg);
+    transition: background-color 0.2s;
+}
+
+tbody tr:hover {
+    background-color: #2a2a2a;
+}
+
+/* ===========================
+   MENSAGENS FLASH E BOTÕES
+=========================== */
+.flashes {
+    list-style: none;
+    margin-bottom: 20px;
+}
+
+.flashes li {
+    background-color: #e74c3c;
+    color: white;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+td button {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+}
+
+/* ===========================
+   RESPONSIVIDADE 📱
+=========================== */
+.menu-toggle {
+    display: none;
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    background-color: var(--primary-color);
+    color: white;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 1000;
+    font-size: 18px;
+}
+
+@media (max-width: 768px) {
+    .menu-toggle {
+        display: block;
+    }
+    .sidebar {
+        left: -240px; /* Esconde a sidebar fora da tela */
+    }
+    .sidebar.open {
+        left: 0; /* Mostra a sidebar */
+    }
+    .main-content {
+        margin-left: 0;
+        width: 100%;
+        padding: 20px;
+    }
+    .main-content.sidebar-open { /* Empurra o conteúdo quando a sidebar abre */
+        margin-left: 240px; 
+    }
 }
