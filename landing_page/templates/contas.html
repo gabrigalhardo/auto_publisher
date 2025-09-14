@@ -40,7 +40,7 @@
                     <td>{{ conta.username }}</td>
                     <td>{{ conta.ig_user_id }}</td>
                     <td>
-                        <form action="{{ url_for('remover_conta', conta_id=conta.id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja remover esta conta? Esta ação não pode ser desfeita.');">
+                        <form action="{{ url_for('remover_conta', ig_user_id=conta.ig_user_id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja remover esta conta? Esta ação não pode ser desfeita.');">
                             <button type="submit" class="btn-danger">Remover</button>
                         </form>
                     </td>

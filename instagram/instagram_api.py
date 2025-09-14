@@ -17,7 +17,7 @@ def get_db():
         database=os.getenv("DB_NAME")
     )
 
-def publish_reel(usuario_id, conta_id, video_path, caption, agendamento=None, publicacao_id=None):
+def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, publicacao_id=None):
     """
     Publica ou agenda um Reel no Instagram.
     """
@@ -25,7 +25,7 @@ def publish_reel(usuario_id, conta_id, video_path, caption, agendamento=None, pu
     cursor = db.cursor(dictionary=True)
 
     # Buscar conta e token
-    cursor.execute("SELECT * FROM contas WHERE id=%s AND usuario_id=%s", (conta_id, usuario_id))
+    cursor.execute("SELECT * FROM contas WHERE id=%s AND usuario_id=%s", (ig_user_id, usuario_id))
     conta = cursor.fetchone()
     if not conta:
         db.close()
@@ -37,8 +37,8 @@ def publish_reel(usuario_id, conta_id, video_path, caption, agendamento=None, pu
     # Se tiver agendamento futuro, salva no banco como 'agendado'
     if agendamento:
         cursor.execute(
-            "INSERT INTO publicacoes (usuario_id, conta_id, video, legenda, data_hora, status) VALUES (%s,%s,%s,%s,%s,%s)",
-            (usuario_id, conta_id, video_path, caption, agendamento, "agendado")
+            "INSERT INTO publicacoes (usuario_id, ig_user_id, video, legenda, data_hora, status) VALUES (%s,%s,%s,%s,%s,%s)",
+            (usuario_id, ig_user_id, video_path, caption, agendamento, "agendado")
         )
         db.commit()
         db.close()
@@ -52,7 +52,7 @@ def publish_reel(usuario_id, conta_id, video_path, caption, agendamento=None, pu
     files = {'file': open(video_path, 'rb')}
     params = {
         'caption': caption,
-        'media_type': 'VIDEO',
+        'media_type': 'REELS',
         'access_token': access_token
     }
 
@@ -81,8 +81,8 @@ def publish_reel(usuario_id, conta_id, video_path, caption, agendamento=None, pu
         )
     else:
         cursor.execute(
-            "INSERT INTO publicacoes (usuario_id, conta_id, video, legenda, data_hora, status) VALUES (%s,%s,%s,%s,%s,%s)",
-            (usuario_id, conta_id, video_path, caption, datetime.now(), status)
+            "INSERT INTO publicacoes (usuario_id, ig_user_id, video, legenda, data_hora, status) VALUES (%s,%s,%s,%s,%s,%s)",
+            (usuario_id, ig_user_id, video_path, caption, datetime.now(), status)
         )
 
     db.commit()

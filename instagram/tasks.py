@@ -1,3 +1,5 @@
+# tasks.py (versão corrigida e completa)
+
 from datetime import datetime
 from .instagram_api import get_db, publish_reel
 import os
@@ -8,10 +10,11 @@ def run_scheduled_reels():
     cursor = conn.cursor(dictionary=True)
 
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    # Query SQL ajustada para buscar também o usuario_id e ig_user_id
     cursor.execute("""
-        SELECT p.id, p.video, p.legenda, c.ig_user_id, c.access_token
+        SELECT p.id, p.usuario_id, p.ig_user_id, p.video, p.legenda
         FROM publicacoes p
-        JOIN contas c ON p.conta_id = c.id
         WHERE p.status='agendado' AND p.data_hora <= %s
     """, (now,))
     
@@ -19,8 +22,14 @@ def run_scheduled_reels():
     print(f"[{datetime.now()}] Encontrados {len(agendados)} agendamentos para publicar.")
 
     for item in agendados:
-        video_path = os.path.join('static/videos', item['video'])
-        publish_reel(item['access_token'], item['ig_user_id'], video_path, item['legenda'], publicacao_id=item['id'])
+        # A função de publicação agora é chamada com os parâmetros corretos
+        publish_reel(
+            usuario_id=item['usuario_id'], 
+            ig_user_id=item['ig_user_id'], 
+            video_path=item['video'], 
+            caption=item['legenda'], 
+            publicacao_id=item['id']
+        )
     
     cursor.close()
     conn.close()

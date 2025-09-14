@@ -126,7 +126,7 @@ def dashboard():
     cursor.execute("""
         SELECT p.*, c.username 
         FROM publicacoes p 
-        LEFT JOIN contas c ON p.conta_id=c.id 
+        LEFT JOIN contas c ON p.ig_user_id=c.id 
         WHERE p.usuario_id=%s 
         ORDER BY p.data_hora DESC
     """, (current_user.id,))
@@ -149,9 +149,9 @@ def upload_video():
     video_file = request.files.get("video")
     legenda = request.form.get("legenda")
     agendamento = request.form.get("agendamento")
-    conta_id = request.form.get("conta_id")
+    ig_user_id = request.form.get("ig_user_id")
 
-    if not video_file or not legenda or not conta_id:
+    if not video_file or not legenda or not ig_user_id:
         flash("Preencha todos os campos e selecione a conta!")
         return redirect(url_for("dashboard"))
 
@@ -159,7 +159,7 @@ def upload_video():
     video_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
     video_file.save(video_path)
 
-    result = publish_reel(current_user.id, conta_id, video_path, legenda, agendamento)
+    result = publish_reel(current_user.id, ig_user_id, video_path, legenda, agendamento)
     flash(result)
 
     return redirect(url_for("dashboard"))
@@ -304,25 +304,23 @@ def callback():
     return redirect(url_for('contas'))
 
 # ================= REMOVER CONTA =================
-@app.route("/remover_conta/<int:conta_id>", methods=["POST"])
+@app.route("/remover_conta/<string:ig_user_id>", methods=["POST"]) # MUDANÇA 1: espera um 'string'
 @login_required
-def remover_conta(conta_id):
+def remover_conta(ig_user_id): # MUDANÇA 2: o nome da variável é claro
     db = get_db()
     cursor = db.cursor()
     try:
-        # A cláusula "AND usuario_id=%s" é uma camada CRÍTICA de segurança.
-        # Ela garante que um usuário só pode remover uma conta que lhe pertence.
+        # MUDANÇA 3: O comando agora deleta procurando pelo ig_user_id
         cursor.execute(
-            "DELETE FROM contas WHERE id=%s AND usuario_id=%s",
-            (conta_id, current_user.id)
+            "DELETE FROM contas WHERE ig_user_id=%s AND usuario_id=%s",
+            (ig_user_id, current_user.id)
         )
         db.commit()
 
-        # cursor.rowcount retorna o número de linhas afetadas. Se for > 0, a exclusão funcionou.
         if cursor.rowcount > 0:
             flash("Conta removida com sucesso!")
         else:
-            flash("Não foi possível remover a conta. Talvez ela não exista ou não pertença a você.")
+            flash("Não foi possível remover a conta.")
     except mysql.connector.Error as err:
         flash(f"Ocorreu um erro ao remover a conta: {err}")
     finally:
