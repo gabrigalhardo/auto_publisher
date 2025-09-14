@@ -3,36 +3,53 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-<h1>Bem-vindo, {{ current_user.username }}!</h1>
+<!-- Menu toggle para mobile -->
+<div class="menu-toggle">☰</div>
 
-<!-- Flash messages -->
-{% with messages = get_flashed_messages() %}
-  {% if messages %}
-    <ul class="flashes">
-      {% for msg in messages %}
-        <li>{{ msg }}</li>
-      {% endfor %}
+<!-- Sidebar -->
+<div class="sidebar">
+    <h2>Auto Publisher</h2>
+    <ul>
+        <li><a href="{{ url_for('dashboard') }}" class="active">Dashboard</a></li>
+        <li><a href="{{ url_for('publicacoes') }}">Publicações</a></li>
+        <li><a href="{{ url_for('contas') }}">Contas</a></li>
+        <li><a href="{{ url_for('logout') }}">Sair</a></li>
     </ul>
-  {% endif %}
-{% endwith %}
+</div>
 
-<!-- Formulário de upload -->
-<section class="upload-section">
-    <h2>Publicar Reels</h2>
-    <form action="{{ url_for('upload_video') }}" method="POST" enctype="multipart/form-data">
-        <label for="conta">Selecione a conta:</label>
-        <select name="conta_id" required>
-            {% for conta in contas %}
-                <option value="{{ conta.id }}">{{ conta.username }}</option>
-            {% endfor %}
-        </select>
+<!-- Conteúdo principal -->
+<div class="main-content">
+    <h1>Bem-vindo, {{ current_user.username }}!</h1>
 
-        <input type="file" name="video" accept="video/*" required>
-        <textarea name="legenda" placeholder="Escreva a legenda..."></textarea>
-        <input type="datetime-local" name="agendamento" placeholder="Selecione data e hora">
-        <button type="submit">Publicar</button>
-    </form>
-</section>
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul class="flashes">
+          {% for msg in messages %}
+            <li>{{ msg }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <!-- Formulário de upload -->
+    <section class="upload-section">
+        <h2>Publicar Reels</h2>
+        <form action="{{ url_for('upload_video') }}" method="POST" enctype="multipart/form-data">
+            <label for="conta">Selecione a conta:</label>
+            <select name="conta_id" required>
+                {% for conta in contas %}
+                    <option value="{{ conta.id }}">{{ conta.username }}</option>
+                {% endfor %}
+            </select>
+
+            <input type="file" name="video" accept="video/*" required>
+            <textarea name="legenda" placeholder="Escreva a legenda..." required></textarea>
+            <input type="datetime-local" name="agendamento" placeholder="Selecione data e hora">
+            <button type="submit">Publicar</button>
+        </form>
+    </section>
+</div>
 
 <script>
 flatpickr("input[name=agendamento]", {
@@ -40,5 +57,14 @@ flatpickr("input[name=agendamento]", {
     dateFormat: "Y-m-d H:i",
     minDate: "today"
 });
+
+// Menu toggle para mobile
+const menuToggle = document.querySelector('.menu-toggle');
+const sidebar = document.querySelector('.sidebar');
+if(menuToggle && sidebar){
+    menuToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('open');
+    });
+}
 </script>
 {% endblock %}

@@ -24,7 +24,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh; /* Centralização vertical */
+    min-height: 100vh;
     width: 100%;
     padding: 40px;
 }
@@ -49,7 +49,7 @@ body {
     margin-bottom: 30px;
 }
 
-.user-box input {
+.user-box input, .user-box textarea {
     width: 100%;
     padding: 10px;
     background: transparent;
@@ -70,7 +70,9 @@ body {
 }
 
 .user-box input:focus ~ label,
-.user-box input:valid ~ label {
+.user-box input:valid ~ label,
+.user-box textarea:focus ~ label,
+.user-box textarea:valid ~ label {
     top: -15px;
     font-size: 12px;
     color: #df1949;
@@ -125,30 +127,7 @@ body {
 }
 
 /* ===========================
-   FORM FIELD BEHAVIOR
-=========================== */
-input, textarea, select {
-    outline: none;
-    border: none;
-    border-bottom: 1px solid #555;
-    background-color: transparent;
-    color: #eee;
-}
-
-/* Autofill remove fundo branco */
-input:-webkit-autofill,
-input:-webkit-autofill:focus {
-    -webkit-box-shadow: 0 0 0px 1000px #333 inset !important;
-    -webkit-text-fill-color: #eee !important;
-    transition: background-color 5000s ease-in-out 0s;
-}
-
-input:focus, textarea:focus, select:focus {
-    border-bottom: 1px solid #df1949;
-}
-
-/* ===========================
-   DASHBOARD (Sidebar + Conteúdo)
+   DASHBOARD
 =========================== */
 .sidebar {
     width: 220px;
@@ -205,11 +184,11 @@ h1, h2 {
     margin-bottom: 20px;
 }
 
-/* Formulários no painel */
+/* Formulários */
 form {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 15px;
     background-color: #222;
     padding: 20px;
     border-radius: 10px;
@@ -225,10 +204,14 @@ button {
     font-weight: bold;
     cursor: pointer;
     transition: 0.3s;
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
 }
 
 button:hover {
     background-color: #e61c49;
+    color: #fff;
 }
 
 /* Tabelas */
@@ -272,9 +255,7 @@ th {
     }
 }
 
-/* ===========================
-   MENU TOGGLE (RESPONSIVO)
-=========================== */
+/* Menu toggle */
 .menu-toggle {
     display: none;
     position: fixed;
