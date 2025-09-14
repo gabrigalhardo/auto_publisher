@@ -23,7 +23,7 @@
         <select name="conta_id" id="conta_id" required>
             <option value="" disabled selected>Escolha uma conta</option>
             {% for conta in contas %}
-                <option value="{{ conta.id }}">{{ conta.username }}</option>
+                <option value="{{ conta.ig_user_id }}">{{ conta.username }}</option>
             {% endfor %}
         </select>
 

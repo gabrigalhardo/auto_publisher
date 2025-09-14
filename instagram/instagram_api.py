@@ -1,3 +1,5 @@
+# instagram_api.py (versão completa e atualizada)
+
 import os
 import mysql.connector
 import requests
@@ -8,8 +10,8 @@ load_dotenv()
 
 GRAPH_API_URL = "https://graph.facebook.com/v18.0"
 
-# Função para criar a conexão com o banco de dados MySQL
 def get_db():
+    """Função para criar a conexão com o banco de dados MySQL."""
     return mysql.connector.connect(
         host=os.getenv("DB_HOST"),
         user=os.getenv("DB_USER"),
@@ -20,21 +22,22 @@ def get_db():
 def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, publicacao_id=None):
     """
     Publica ou agenda um Reel no Instagram.
+    Recebe o ig_user_id diretamente para identificar a conta.
     """
     db = get_db()
     cursor = db.cursor(dictionary=True)
 
-    # Buscar conta e token
-    cursor.execute("SELECT * FROM contas WHERE id=%s AND usuario_id=%s", (ig_user_id, usuario_id))
+    # CORREÇÃO: Busca a conta e o token usando o ig_user_id, que é o identificador
+    # único que recebemos do frontend e da lógica de agendamento.
+    cursor.execute("SELECT * FROM contas WHERE ig_user_id=%s AND usuario_id=%s", (ig_user_id, usuario_id))
     conta = cursor.fetchone()
     if not conta:
         db.close()
-        return "Conta não encontrada."
+        return "Conta não encontrada ou não pertence a este usuário."
 
     access_token = conta['access_token']
-    ig_user_id = conta['ig_user_id']
 
-    # Se tiver agendamento futuro, salva no banco como 'agendado'
+    # Se tiver agendamento futuro, salva no banco como 'agendado' e encerra
     if agendamento:
         cursor.execute(
             "INSERT INTO publicacoes (usuario_id, ig_user_id, video, legenda, data_hora, status) VALUES (%s,%s,%s,%s,%s,%s)",
@@ -49,6 +52,7 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
         db.close()
         return "Arquivo de vídeo não encontrado."
 
+    # Passo 1: Fazer o upload do vídeo para obter um creation_id
     files = {'file': open(video_path, 'rb')}
     params = {
         'caption': caption,
@@ -67,13 +71,14 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
 
     creation_id = res_json['id']
 
+    # Passo 2: Publicar o vídeo usando o creation_id
     publish_url = f"{GRAPH_API_URL}/{ig_user_id}/media_publish"
     publish_res = requests.post(publish_url, data={'creation_id': creation_id, 'access_token': access_token})
     publish_json = publish_res.json()
 
     status = "publicado" if 'id' in publish_json else "erro"
 
-    # Se já existia um registro no banco (agendado), atualiza, senão cria novo
+    # Salva ou atualiza o status no banco de dados
     if publicacao_id:
         cursor.execute(
             "UPDATE publicacoes SET status=%s, data_hora=%s WHERE id=%s",

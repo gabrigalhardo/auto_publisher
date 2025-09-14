@@ -126,8 +126,8 @@ def dashboard():
     cursor.execute("""
         SELECT p.*, c.username 
         FROM publicacoes p 
-        LEFT JOIN contas c ON p.ig_user_id=c.id 
-        WHERE p.usuario_id=%s 
+        LEFT JOIN contas c ON p.ig_user_id = c.ig_user_id
+        WHERE p.usuario_id = %s 
         ORDER BY p.data_hora DESC
     """, (current_user.id,))
     publicacoes = cursor.fetchall()
@@ -149,9 +149,12 @@ def upload_video():
     video_file = request.files.get("video")
     legenda = request.form.get("legenda")
     agendamento = request.form.get("agendamento")
-    ig_user_id = request.form.get("ig_user_id")
+    
+    # CORREÇÃO: Pegamos o valor do campo 'conta_id' do formulário,
+    # que agora contém o ig_user_id da conta selecionada.
+    selected_ig_user_id = request.form.get("conta_id")
 
-    if not video_file or not legenda or not ig_user_id:
+    if not video_file or not legenda or not selected_ig_user_id:
         flash("Preencha todos os campos e selecione a conta!")
         return redirect(url_for("dashboard"))
 
@@ -159,7 +162,8 @@ def upload_video():
     video_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
     video_file.save(video_path)
 
-    result = publish_reel(current_user.id, ig_user_id, video_path, legenda, agendamento)
+    # CORREÇÃO: Passamos a variável correta para a função de publicar.
+    result = publish_reel(current_user.id, selected_ig_user_id, video_path, legenda, agendamento)
     flash(result)
 
     return redirect(url_for("dashboard"))
