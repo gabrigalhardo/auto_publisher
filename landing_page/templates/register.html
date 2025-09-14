@@ -8,8 +8,7 @@
 </head>
 <body>
     <div class="auth-page">
-        <div class="login-box">
-            <h2>Cadastro</h2>
+        <div class="auth-box"> <h2>Cadastro</h2>
 
             {% with messages = get_flashed_messages() %}
               {% if messages %}
@@ -23,22 +22,18 @@
 
             <form method="POST" action="{{ url_for('register') }}">
                 <div class="user-box">
-                    <input type="text" name="username" required>
-                    <label>Usuário</label>
+                    <input type="text" name="username" id="username" required placeholder=" "> <label for="username">Usuário</label>
                 </div>
                 <div class="user-box">
-                    <input type="email" name="email" required>
-                    <label>Email</label>
+                    <input type="email" name="email" id="email" required placeholder=" "> <label for="email">Email</label>
                 </div>
                 <div class="user-box password-container">
-                    <input type="password" id="senha" name="senha" required>
-                    <label>Senha</label>
+                    <input type="password" id="senha" name="senha" required placeholder=" "> <label for="senha">Senha</label>
                     <span class="toggle-password" onclick="togglePassword()">👁</span>
                 </div>
                 <button type="submit">Cadastrar</button>
             </form>
-            <p class="register-link">
-                Já tem conta? <a href="{{ url_for('index') }}">Entre aqui</a>
+            <p class="auth-link"> Já tem conta? <a href="{{ url_for('index') }}">Entre aqui</a>
             </p>
         </div>
     </div>

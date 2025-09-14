@@ -63,6 +63,7 @@ a:hover {
 .user-box {
     position: relative;
     margin-bottom: 30px;
+    text-align: left; /* Alinhar o label e input à esquerda dentro da caixa */
 }
 
 .user-box input {
@@ -74,19 +75,23 @@ a:hover {
     outline: none;
     color: var(--text-color);
     font-size: 16px;
+    position: relative; /* Adicionado para garantir o z-index correto se necessário */
+    z-index: 1; /* Para que o input fique acima do label se houver sobreposição */
 }
 
 .user-box label {
     position: absolute;
-    top: 10px;
+    top: 10px; /* Posição inicial do label */
     left: 0;
     color: var(--text-muted);
     pointer-events: none;
-    transition: 0.3s;
+    transition: 0.3s ease-in-out; /* Transição mais suave */
+    z-index: 0; /* Para o label ficar abaixo do input */
 }
 
+/* Move o label para cima quando o input está em foco ou tem conteúdo */
 .user-box input:focus ~ label,
-.user-box input:valid ~ label {
+.user-box input:not(:placeholder-shown) ~ label { /* Usamos :not(:placeholder-shown) para inputs com conteúdo */
     top: -15px;
     font-size: 12px;
     color: var(--primary-color);
@@ -94,7 +99,7 @@ a:hover {
 
 .auth-box button {
     background-color: var(--primary-color);
-    color: white;
+    color: white; /* Cor do texto no botão */
     font-weight: bold;
     border: none;
     padding: 12px 20px;
@@ -103,6 +108,7 @@ a:hover {
     font-size: 16px;
     cursor: pointer;
     transition: 0.3s;
+    margin-top: 15px; /* Adicionado um pouco de margem acima do botão */
 }
 
 .auth-box button:hover {
@@ -112,8 +118,38 @@ a:hover {
 .auth-link {
     margin-top: 20px;
     color: var(--text-muted);
+    font-size: 14px;
 }
 
+.auth-link a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.auth-link a:hover {
+    color: var(--primary-hover);
+}
+
+/* Flash messages */
+.flashes {
+    list-style: none;
+    margin-bottom: 20px;
+    padding: 0;
+}
+
+.flashes li {
+    background-color: #e74c3c; /* Vermelho para erros/alertas */
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 10px; /* Espaçamento entre as mensagens */
+    text-align: left; /* Alinhar texto das mensagens à esquerda */
+}
+
+/* ===========================
+   MOSTRAR / OCULTAR SENHA
+=========================== */
 .password-container {
     position: relative;
 }
@@ -121,12 +157,18 @@ a:hover {
 .toggle-password {
     position: absolute;
     top: 50%;
-    right: 10px;
+    right: 0px; /* Ajuste para não colar na borda do input */
     transform: translateY(-50%);
     cursor: pointer;
     font-size: 18px;
     color: var(--text-muted);
     user-select: none;
+    z-index: 2; /* Para que o ícone fique acima do input */
+    padding: 5px; /* Área clicável maior */
+}
+
+.toggle-password:hover {
+    color: var(--primary-color);
 }
 
 /* ===========================
