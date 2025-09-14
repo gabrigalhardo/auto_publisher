@@ -57,15 +57,17 @@ def index():
             flash("Email ou senha incorretos!")
             return redirect(url_for("index"))
 
-    return render_template("login.html")
+    return render_template("login.html", hide_sidebar=True)
 
 # ================= REGISTRO =================
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
         email = request.form.get("email")
-        senha = request.form.get("senha")
-        if not email or not senha:
+        senha = request.form.get("password")  # <--- corrigido
+        username = request.form.get("username")  # caso queira salvar o nome de usuário no futuro
+
+        if not email or not senha or not username:
             flash("Preencha todos os campos!")
             return redirect(url_for("register"))
 
@@ -74,8 +76,8 @@ def register():
         cursor = db.cursor()
         try:
             cursor.execute(
-                "INSERT INTO usuarios (email, senha, liberado) VALUES (%s, %s, %s)",
-                (email, hashed_password, "nao")
+                "INSERT INTO usuarios (username, email, senha, liberado) VALUES (%s, %s, %s, %s)",
+                (username, email, hashed_password, "nao")
             )
             db.commit()
             flash("Cadastro realizado! Aguarde liberação do acesso.")
@@ -86,7 +88,8 @@ def register():
 
         return redirect(url_for("index"))
 
-    return render_template("register.html")
+    # renderizar sem menu lateral
+    return render_template("register.html", hide_sidebar=True)
 
 # ================= DASHBOARD =================
 @app.route("/dashboard", methods=["GET"])
