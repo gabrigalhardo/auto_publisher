@@ -33,14 +33,14 @@ body {
     background: #1b1b1b;
     padding: 40px;
     border-radius: 10px;
-    box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+    box-shadow: 0 0 15px rgba(230,28,73,0.3);
     width: 100%;
     max-width: 400px;
     text-align: center;
 }
 
 .login-box h2 {
-    color: #0ff;
+    color: #e61c49;
     margin-bottom: 25px;
 }
 
@@ -73,11 +73,11 @@ body {
 .user-box input:valid ~ label {
     top: -15px;
     font-size: 12px;
-    color: #0ff;
+    color: #e61c49;
 }
 
 .login-box button {
-    background-color: #0ff;
+    background-color: #e61c49;
     color: #111;
     border: none;
     padding: 12px 20px;
@@ -90,7 +90,7 @@ body {
 }
 
 .login-box button:hover {
-    background-color: #0aa;
+    background-color: #c21740;
     color: #fff;
 }
 
@@ -101,13 +101,13 @@ body {
 }
 
 .register-link a {
-    color: #0ff;
+    color: #e61c49;
     text-decoration: none;
     font-weight: bold;
 }
 
 .register-link a:hover {
-    color: #0aa;
+    color: #c21740;
 }
 
 /* Flash messages */
@@ -141,7 +141,7 @@ body {
 }
 
 .sidebar h2 {
-    color: #0ff;
+    color: #e61c49;
     text-align: center;
     margin-bottom: 30px;
 }
@@ -166,7 +166,7 @@ body {
 
 .sidebar ul li a:hover,
 .sidebar ul li a.active {
-    background-color: #0aa;
+    background-color: #e61c49;
     color: #fff;
 }
 
@@ -178,7 +178,7 @@ body {
 
 /* Cabeçalhos */
 h1, h2 {
-    color: #0ff;
+    color: #e61c49;
     margin-bottom: 20px;
 }
 
@@ -204,12 +204,17 @@ input, textarea, select {
     color: #eee;
 }
 
+input::placeholder,
+textarea::placeholder {
+    color: #aaa;
+}
+
 textarea {
     resize: vertical;
 }
 
 button {
-    background-color: #0ff;
+    background-color: #e61c49;
     color: #111;
     font-weight: bold;
     cursor: pointer;
@@ -217,7 +222,7 @@ button {
 }
 
 button:hover {
-    background-color: #0aa;
+    background-color: #c21740;
 }
 
 /* Tabelas */
@@ -235,7 +240,7 @@ th, td {
 }
 
 th {
-    background-color: #0aa;
+    background-color: #e61c49;
 }
 
 /* ===========================
@@ -258,5 +263,37 @@ th {
         margin: 0;
         width: 100%;
         padding: 10px;
+    }
+}
+
+/* ===========================
+   MENU TOGGLE (RESPONSIVO)
+=========================== */
+.menu-toggle {
+    display: none;
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    background-color: #e61c49;
+    color: #fff;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 1000;
+    font-size: 18px;
+}
+
+@media (max-width: 500px) {
+    .menu-toggle {
+        display: block;
+    }
+    .sidebar {
+        position: fixed;
+        left: -250px;
+        transition: left 0.3s;
+        z-index: 999;
+    }
+    .sidebar.open {
+        left: 0;
     }
 }

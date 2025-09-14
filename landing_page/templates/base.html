@@ -11,12 +11,14 @@
 <body>
 
 {% if not hide_sidebar %}
-<div class="sidebar">
+<div class="menu-toggle" onclick="toggleSidebar()">☰ Menu</div>
+
+<div class="sidebar" id="sidebar">
     <h2>Auto Publisher</h2>
     <ul>
-        <li><a href="{{ url_for('dashboard') }}" class="active">Dashboard</a></li>
-        <li><a href="{{ url_for('contas') }}">Gerenciar Contas</a></li>
-        <li><a href="{{ url_for('publicacoes') }}">Publicações/Agendamentos</a></li>
+        <li><a href="{{ url_for('dashboard') }}" class="{% if request.endpoint == 'dashboard' %}active{% endif %}">Dashboard</a></li>
+        <li><a href="{{ url_for('contas') }}" class="{% if request.endpoint == 'contas' %}active{% endif %}">Gerenciar Contas</a></li>
+        <li><a href="{{ url_for('publicacoes') }}" class="{% if request.endpoint == 'publicacoes' %}active{% endif %}">Publicações/Agendamentos</a></li>
         <li><a href="{{ url_for('logout') }}">Sair</a></li>
     </ul>
 </div>
@@ -25,6 +27,23 @@
 <div class="main-content">
     {% block content %}{% endblock %}
 </div>
+
+<script>
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    sidebar.classList.toggle('open');
+}
+
+// Fecha o menu ao clicar em qualquer link (em telas pequenas)
+document.querySelectorAll('.sidebar ul li a').forEach(link => {
+    link.addEventListener('click', () => {
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar.classList.contains('open')) {
+            sidebar.classList.remove('open');
+        }
+    });
+});
+</script>
 
 </body>
 </html>
