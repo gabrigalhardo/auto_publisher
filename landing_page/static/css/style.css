@@ -147,6 +147,20 @@ a:hover {
     text-align: left; /* Alinhar texto das mensagens à esquerda */
 }
 
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+    /* "Pinta" o fundo com uma sombra interna da cor do nosso tema */
+    box-shadow: 0 0 0 30px var(--content-bg) inset !important;
+    
+    /* Força a cor do texto para a cor do nosso tema */
+    -webkit-text-fill-color: var(--text-color) !important;
+    
+    /* Um truque para evitar que o fundo pisque em branco ao focar */
+    transition: background-color 5000s ease-in-out 0s;
+}
+
 /* ===========================
    MOSTRAR / OCULTAR SENHA
 =========================== */
