@@ -126,6 +126,29 @@ body {
 }
 
 /* ===========================
+   FORM FIELD BEHAVIOR
+=========================== */
+input, textarea, select {
+    outline: none;
+    border: none;
+    border-bottom: 1px solid #555;
+    background-color: transparent;
+    color: #eee;
+}
+
+/* Autofill remove fundo branco */
+input:-webkit-autofill,
+input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0px 1000px #333 inset !important;
+    -webkit-text-fill-color: #eee !important;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+input:focus, textarea:focus, select:focus {
+    border-bottom: 1px solid #df1949;
+}
+
+/* ===========================
    DASHBOARD (Sidebar + Conteúdo)
 =========================== */
 .sidebar {
@@ -139,7 +162,6 @@ body {
     height: 100%;
     top: 0;
     left: 0;
-    transition: left 0.3s;
 }
 
 .sidebar h2 {
@@ -194,23 +216,6 @@ form {
     border-radius: 10px;
 }
 
-input, textarea, select, button {
-    padding: 10px;
-    border-radius: 5px;
-    border: none;
-    font-size: 14px;
-}
-
-input, textarea, select {
-    background-color: #333;
-    color: #eee;
-}
-
-input::placeholder,
-textarea::placeholder {
-    color: #aaa;
-}
-
 textarea {
     resize: vertical;
 }
@@ -258,24 +263,9 @@ th {
 }
 
 @media (max-width: 500px) {
-    body {
-        flex-direction: column;
-    }
-
-    .menu-toggle {
-        display: block;
-    }
-
     .sidebar {
-        left: -250px;
-        width: 220px;
-        z-index: 999;
+        display: none;
     }
-
-    .sidebar.open {
-        left: 0;
-    }
-
     .main-content {
         margin: 0;
         width: 100%;
@@ -298,4 +288,39 @@ th {
     cursor: pointer;
     z-index: 1000;
     font-size: 18px;
+}
+
+@media (max-width: 500px) {
+    .menu-toggle {
+        display: block;
+    }
+    .sidebar {
+        position: fixed;
+        left: -250px;
+        transition: left 0.3s;
+        z-index: 999;
+    }
+    .sidebar.open {
+        left: 0;
+    }
+}
+
+/* ====== Mostrar/Ocultar senha ====== */
+.password-container {
+    position: relative;
+}
+
+.toggle-password {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 18px;
+    color: #aaa;
+    user-select: none;
+}
+
+.toggle-password:hover {
+    color: #fff;
 }

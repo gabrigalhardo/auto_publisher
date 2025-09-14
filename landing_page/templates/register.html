@@ -1,27 +1,60 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro - Auto Publisher</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="auth-page">
+        <div class="login-box">
+            <h2>Cadastro</h2>
 
-{% block content %}
-<div class="auth-page">
-    <div class="login-box">
-        <h2>Cadastro</h2>
-        <form method="POST">
-            <div class="user-box">
-                <input type="text" name="username" required>
-                <label>Usuário</label>
-            </div>
-            <div class="user-box">
-                <input type="email" name="email" required>
-                <label>E-mail</label>
-            </div>
-            <div class="user-box">
-                <input type="password" name="password" required>
-                <label>Senha</label>
-            </div>
-            <button type="submit">Cadastrar</button>
-        </form>
-        <p class="register-link">
-            Já tem conta? <a href="{{ url_for('index') }}">Faça login</a>
-        </p>
+            {% with messages = get_flashed_messages() %}
+              {% if messages %}
+                <ul class="flashes">
+                  {% for message in messages %}
+                    <li>{{ message }}</li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('register') }}">
+                <div class="user-box">
+                    <input type="text" name="username" required>
+                    <label>Usuário</label>
+                </div>
+                <div class="user-box">
+                    <input type="email" name="email" required>
+                    <label>Email</label>
+                </div>
+                <div class="user-box password-container">
+                    <input type="password" id="senha" name="senha" required>
+                    <label>Senha</label>
+                    <span class="toggle-password" onclick="togglePassword()">👁</span>
+                </div>
+                <button type="submit">Cadastrar</button>
+            </form>
+            <p class="register-link">
+                Já tem conta? <a href="{{ url_for('login') }}">Entre aqui</a>
+            </p>
+        </div>
     </div>
-</div>
-{% endblock %}
+
+    <script>
+        function togglePassword() {
+            const input = document.getElementById("senha");
+            const icon = document.querySelector(".toggle-password");
+            if (input.type === "password") {
+                input.type = "text";
+                icon.textContent = "🙈";
+            } else {
+                input.type = "password";
+                icon.textContent = "👁";
+            }
+        }
+    </script>
+</body>
+</html>

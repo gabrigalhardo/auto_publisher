@@ -26,9 +26,10 @@
                     <input type="email" name="email" required>
                     <label>Email</label>
                 </div>
-                <div class="user-box">
-                    <input type="password" name="senha" required>
+                <div class="user-box password-container">
+                    <input type="password" id="senha" name="senha" required>
                     <label>Senha</label>
+                    <span class="toggle-password" onclick="togglePassword()">👁</span>
                 </div>
                 <button type="submit">Entrar</button>
             </form>
@@ -37,5 +38,19 @@
             </p>
         </div>
     </div>
+
+    <script>
+        function togglePassword() {
+            const input = document.getElementById("senha");
+            const icon = document.querySelector(".toggle-password");
+            if (input.type === "password") {
+                input.type = "text";
+                icon.textContent = "🙈";
+            } else {
+                input.type = "password";
+                icon.textContent = "👁";
+            }
+        }
+    </script>
 </body>
 </html>

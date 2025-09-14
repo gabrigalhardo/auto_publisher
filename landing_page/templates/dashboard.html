@@ -3,7 +3,7 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-<h1>Bem-vindo, {{ session['user_email'] }}</h1>
+<h1>Bem-vindo, {{ session['user_username'] }}</h1>
 
 <!-- Flash messages -->
 {% with messages = get_flashed_messages() %}
