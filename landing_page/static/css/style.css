@@ -19,7 +19,7 @@ body {
 }
 
 /* ===========================
-   LOGIN PAGE
+   LOGIN / REGISTER PAGE
 =========================== */
 .container {
     width: 100%;
@@ -40,7 +40,7 @@ body {
 }
 
 .login-box h2 {
-    color: #e61c49;
+    color: #b20419;
     margin-bottom: 25px;
 }
 
@@ -73,11 +73,11 @@ body {
 .user-box input:valid ~ label {
     top: -15px;
     font-size: 12px;
-    color: #e61c49;
+    color: #b20419;
 }
 
 .login-box button {
-    background-color: #e61c49;
+    background-color: #b20419;
     color: #111;
     border: none;
     padding: 12px 20px;
@@ -90,7 +90,7 @@ body {
 }
 
 .login-box button:hover {
-    background-color: #c21740;
+    background-color: #f2375f;
     color: #fff;
 }
 
@@ -101,13 +101,13 @@ body {
 }
 
 .register-link a {
-    color: #e61c49;
+    color: #b20419;
     text-decoration: none;
     font-weight: bold;
 }
 
 .register-link a:hover {
-    color: #c21740;
+    color: #f2375f;
 }
 
 /* Flash messages */
@@ -141,7 +141,7 @@ body {
 }
 
 .sidebar h2 {
-    color: #e61c49;
+    color: #b20419;
     text-align: center;
     margin-bottom: 30px;
 }
@@ -166,7 +166,7 @@ body {
 
 .sidebar ul li a:hover,
 .sidebar ul li a.active {
-    background-color: #e61c49;
+    background-color: #b20419;
     color: #fff;
 }
 
@@ -178,7 +178,7 @@ body {
 
 /* Cabeçalhos */
 h1, h2 {
-    color: #e61c49;
+    color: #b20419;
     margin-bottom: 20px;
 }
 
@@ -214,7 +214,7 @@ textarea {
 }
 
 button {
-    background-color: #e61c49;
+    background-color: #b20419;
     color: #111;
     font-weight: bold;
     cursor: pointer;
@@ -222,7 +222,7 @@ button {
 }
 
 button:hover {
-    background-color: #c21740;
+    background-color: #f2375f;
 }
 
 /* Tabelas */
@@ -240,7 +240,7 @@ th, td {
 }
 
 th {
-    background-color: #e61c49;
+    background-color: #b20419;
 }
 
 /* ===========================
@@ -274,7 +274,7 @@ th {
     position: fixed;
     top: 15px;
     left: 15px;
-    background-color: #e61c49;
+    background-color: #b20419;
     color: #fff;
     padding: 10px 15px;
     border-radius: 5px;
