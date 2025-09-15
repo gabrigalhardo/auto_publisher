@@ -1,4 +1,4 @@
-# instagram_api.py (versão final com upload em duas etapas)
+# instagram_api.py (versão final CORRIGIDA com upload em duas etapas)
 
 import os
 import mysql.connector
@@ -9,7 +9,7 @@ import time
 
 load_dotenv()
 
-GRAPH_API_URL = "https://graph.facebook.com/v19.0" # Atualizado para a versão mais recente da API
+GRAPH_API_URL = "https://graph.facebook.com/v19.0"
 
 def get_db():
     """Função para criar a conexão com o banco de dados MySQL."""
@@ -53,6 +53,7 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
         init_upload_url = f"{GRAPH_API_URL}/{ig_user_id}/media"
         init_params = {
             'media_type': 'REELS',
+            'upload_type': 'resumable', # <<< ADICIONADO: O parâmetro que faltava
             'caption': caption,
             'access_token': access_token
         }
@@ -60,36 +61,40 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
         init_data = init_res.json()
 
         if 'id' not in init_data:
-            raise Exception(f"Erro ao iniciar o upload: {init_data}")
+            # A API pode retornar o erro aqui, vamos tratar
+            if 'error' in init_data:
+                 raise Exception(f"Erro ao iniciar o upload: {init_data['error']['message']}")
+            raise Exception(f"Erro desconhecido ao iniciar o upload: {init_data}")
 
         creation_id = init_data['id']
 
         # --- ETAPA 2: FAZER O UPLOAD DO ARQUIVO PARA A URL FORNECIDA ---
-        # A API de vídeo exige um endpoint diferente para o upload real do arquivo
-        upload_video_url = f"{GRAPH_API_URL}/{creation_id}"
+        upload_video_url = f"https://graph.facebook.com/v19.0/{creation_id}"
         headers = {
             'Authorization': f'OAuth {access_token}',
+            'file_offset': '0' # Adicionado para indicar o início do arquivo
         }
         with open(video_path, 'rb') as video_file:
             upload_res = requests.post(upload_video_url, headers=headers, data=video_file)
         
         upload_data = upload_res.json()
         if not upload_data.get('success'):
-             raise Exception(f"Erro durante upload do arquivo de vídeo: {upload_data}")
+             raise Exception(f"Erro durante o upload do arquivo de vídeo: {upload_data}")
 
 
-        # --- ETAPA 3: VERIFICAR O STATUS DO UPLOAD (Opcional, mas boa prática) ---
-        # O processamento do vídeo pode levar um tempo.
-        # Vamos verificar o status algumas vezes antes de tentar publicar.
-        for _ in range(5): # Tenta verificar 5 vezes
+        # --- ETAPA 3: VERIFICAR O STATUS DO UPLOAD ---
+        for _ in range(10): # Aumentei as tentativas para 10
             status_url = f"{GRAPH_API_URL}/{creation_id}?fields=status_code&access_token={access_token}"
             status_res = requests.get(status_url)
             status_data = status_res.json()
-            if status_data.get('status_code') == 'FINISHED':
+            status_code = status_data.get('status_code')
+            if status_code == 'FINISHED':
                 break
-            time.sleep(5) # Espera 5 segundos entre as verificações
-        else: # Se o loop terminar sem 'break'
-            raise Exception(f"Processamento do vídeo demorou demais. Status: {status_data.get('status_code')}")
+            if status_code == 'ERROR':
+                 raise Exception("Ocorreu um erro no processamento do vídeo pela Meta.")
+            time.sleep(6) # Aumentei o tempo para 6 segundos
+        else:
+            raise Exception(f"Processamento do vídeo demorou demais. Status: {status_code}")
 
 
         # --- ETAPA 4: PUBLICAR O CONTEÚDO ---
