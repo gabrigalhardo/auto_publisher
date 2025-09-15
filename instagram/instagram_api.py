@@ -1,4 +1,4 @@
-# instagram_api.py (versão final com o endpoint de upload CORRETO)
+# instagram_api.py (versão com o nome do Header CORRETO)
 
 import os
 import mysql.connector
@@ -9,7 +9,6 @@ import time
 
 load_dotenv()
 
-# Usaremos v19.0, a mais recente no momento
 GRAPH_API_URL = "https://graph.facebook.com/v19.0" 
 
 def get_db():
@@ -50,7 +49,7 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
         return "Arquivo de vídeo não encontrado."
 
     try:
-        # --- ETAPA 1: INICIAR A SESSÃO DE UPLOAD (no escritório 'graph.facebook.com') ---
+        # --- ETAPA 1: INICIAR A SESSÃO DE UPLOAD ---
         init_upload_url = f"{GRAPH_API_URL}/{ig_user_id}/media"
         init_params = {
             'media_type': 'REELS',
@@ -66,24 +65,24 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
 
         creation_id = init_data['id']
 
-        # --- ETAPA 2: FAZER O UPLOAD DO ARQUIVO (na doca de carga 'rupload.facebook.com') ---
-        # CORREÇÃO CRÍTICA: A URL de upload do arquivo é diferente!
+        # --- ETAPA 2: FAZER O UPLOAD DO ARQUIVO ---
         upload_video_url = f"https://rupload.facebook.com/ig-api-upload/v19.0/{creation_id}"
-        
         headers = {
             'Authorization': f'OAuth {access_token}',
-            'file_offset': '0'
+            'Content-Type': 'application/octet-stream',
+            'Offset': '0' # CORREÇÃO: O nome correto do cabeçalho é 'Offset'
         }
         with open(video_path, 'rb') as video_file:
             video_data = video_file.read()
             upload_res = requests.post(upload_video_url, headers=headers, data=video_data)
         
         upload_data = upload_res.json()
-        if not upload_data.get('success') and upload_data.get('debug_info', {}).get('retriable') is False:
-             raise Exception(f"Erro durante o upload do arquivo de vídeo: {upload_data}")
+        if not upload_data.get('success'):
+             # Adicionamos uma verificação mais robusta do erro que você recebeu
+             if upload_data.get('debug_info', {}).get('retriable') is False:
+                raise Exception(f"Erro durante o upload do arquivo de vídeo: {upload_data}")
 
-        # --- ETAPA 3: VERIFICAR O STATUS DO UPLOAD (no escritório 'graph.facebook.com') ---
-        # Damos tempo para a Meta processar o vídeo que acabamos de enviar.
+        # --- ETAPA 3: VERIFICAR O STATUS DO UPLOAD ---
         for _ in range(30): 
             status_url = f"{GRAPH_API_URL}/{creation_id}?fields=status_code&access_token={access_token}"
             status_res = requests.get(status_url)
@@ -97,7 +96,7 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
         else:
             raise Exception(f"Processamento do vídeo demorou demais. Status: {status_code}")
 
-        # --- ETAPA 4: PUBLICAR O CONTEÚDO (no escritório 'graph.facebook.com') ---
+        # --- ETAPA 4: PUBLICAR O CONTEÚDO ---
         publish_url = f"{GRAPH_API_URL}/{ig_user_id}/media_publish"
         publish_params = {
             'creation_id': creation_id,
