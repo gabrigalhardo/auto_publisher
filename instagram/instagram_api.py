@@ -75,7 +75,7 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
         
         upload_data = upload_res.json()
         if not upload_data.get('success'):
-             raise Exception(f"Erro durante o upload do arquivo de vídeo: {upload_data}")
+             raise Exception(f"Erro durante upload do arquivo de vídeo: {upload_data}")
 
 
         # --- ETAPA 3: VERIFICAR O STATUS DO UPLOAD (Opcional, mas boa prática) ---
