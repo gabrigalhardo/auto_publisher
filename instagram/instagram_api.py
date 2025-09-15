@@ -1,4 +1,4 @@
-# instagram_api.py (versão com a correção final do media_type)
+# instagram_api.py (versão corrigida com PUT no upload de vídeo)
 
 import os
 import mysql.connector
@@ -53,7 +53,7 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
         # --- ETAPA 1: INICIAR A SESSÃO DE UPLOAD ---
         init_upload_url = f"{GRAPH_API_URL}/{ig_user_id}/media"
         init_params = {
-            'media_type': 'REELS', # <<< A CORREÇÃO FINAL ESTÁ AQUI
+            'media_type': 'REELS',
             'upload_type': 'resumable',
             'access_token': access_token
         }
@@ -70,20 +70,18 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
         
         with open(video_path, 'rb') as video_file:
             video_data = video_file.read()
-            video_size = str(len(video_data))
 
             headers = {
                 'Authorization': f'OAuth {access_token}',
                 'Content-Type': 'application/octet-stream',
-                'Content-Length': video_size,
                 'Offset': '0'
             }
             
-            upload_res = requests.post(upload_video_url, headers=headers, data=video_data)
+            upload_res = requests.put(upload_video_url, headers=headers, data=video_data)
 
         upload_data = upload_res.json()
         if not upload_data.get('success'):
-             if upload_data.get('debug_info', {}).get('retriable') is False:
+            if upload_data.get('debug_info', {}).get('retriable') is False:
                 raise Exception(f"Erro durante o upload do arquivo de vídeo: {upload_data}")
         
         # --- ETAPA 3: VERIFICAR O STATUS DO UPLOAD ---
@@ -95,7 +93,7 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
             if status_code == 'FINISHED':
                 break
             if status_code == 'ERROR':
-                 raise Exception("Ocorreu um erro no processamento do vídeo pela Meta.")
+                raise Exception("Ocorreu um erro no processamento do vídeo pela Meta.")
             time.sleep(5) 
         else:
             raise Exception(f"Processamento do vídeo demorou demais. Status: {status_code}")
