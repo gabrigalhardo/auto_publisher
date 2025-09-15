@@ -81,7 +81,7 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
 
 
         # --- ETAPA 3: VERIFICAR O STATUS DO UPLOAD ---
-        for _ in range(10): # Aumentei as tentativas para 10
+        for _ in range(30): # Tenta verificar 30 vezes
             status_url = f"{GRAPH_API_URL}/{creation_id}?fields=status_code&access_token={access_token}"
             status_res = requests.get(status_url)
             status_data = status_res.json()
@@ -89,8 +89,8 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
             if status_code == 'FINISHED':
                 break
             if status_code == 'ERROR':
-                 raise Exception("Ocorreu um erro no processamento do vídeo pela Meta.")
-            time.sleep(6) # Aumentei o tempo para 6 segundos
+                    raise Exception("Ocorreu um erro no processamento do vídeo pela Meta.")
+            time.sleep(5) # Espera 5 segundos
         else:
             raise Exception(f"Processamento do vídeo demorou demais. Status: {status_code}")
 
