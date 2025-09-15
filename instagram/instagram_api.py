@@ -67,20 +67,27 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
 
         # --- ETAPA 2: FAZER O UPLOAD DO ARQUIVO ---
         upload_video_url = f"https://rupload.facebook.com/ig-api-upload/v19.0/{creation_id}"
-        headers = {
-            'Authorization': f'OAuth {access_token}',
-            'Content-Type': 'application/octet-stream',
-            'Offset': '0' # CORREÇÃO: O nome correto do cabeçalho é 'Offset'
-        }
+        
+        # A leitura do arquivo agora acontece ANTES de montar os cabeçalhos
         with open(video_path, 'rb') as video_file:
             video_data = video_file.read()
+            video_size = str(len(video_data)) # Calcula o tamanho do arquivo em bytes
+
+            headers = {
+                'Authorization': f'OAuth {access_token}',
+                'Content-Type': 'application/octet-stream',
+                'Offset': '0',
+                'Content-Length': video_size # ADICIONADO: O cabeçalho Content-Length com o tamanho exato do vídeo
+            }
+            
+            # Os dados lidos (video_data) são enviados na requisição
             upload_res = requests.post(upload_video_url, headers=headers, data=video_data)
-        
+
         upload_data = upload_res.json()
         if not upload_data.get('success'):
-             # Adicionamos uma verificação mais robusta do erro que você recebeu
-             if upload_data.get('debug_info', {}).get('retriable') is False:
-                raise Exception(f"Erro durante o upload do arquivo de vídeo: {upload_data}")
+                # Adicionamos uma verificação mais robusta do erro que você recebeu
+                if upload_data.get('debug_info', {}).get('retriable') is False:
+                    raise Exception(f"Erro durante o upload do arquivo de vídeo: {upload_data}")
 
         # --- ETAPA 3: VERIFICAR O STATUS DO UPLOAD ---
         for _ in range(30): 
