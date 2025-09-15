@@ -1,15 +1,14 @@
-# instagram_api.py (versão com o nome do Header CORRETO)
+# instagram_api.py (versão completa e atualizada com melhor tratamento de erro)
 
 import os
 import mysql.connector
 import requests
 from datetime import datetime
 from dotenv import load_dotenv
-import time
 
 load_dotenv()
 
-GRAPH_API_URL = "https://graph.facebook.com/v19.0" 
+GRAPH_API_URL = "https://graph.facebook.com/v18.0"
 
 def get_db():
     """Função para criar a conexão com o banco de dados MySQL."""
@@ -22,7 +21,8 @@ def get_db():
 
 def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, publicacao_id=None):
     """
-    Publica ou agenda um Reel no Instagram usando o fluxo de upload correto.
+    Publica ou agenda um Reel no Instagram.
+    Recebe o ig_user_id diretamente para identificar a conta.
     """
     db = get_db()
     cursor = db.cursor(dictionary=True)
@@ -48,81 +48,40 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
         db.close()
         return "Arquivo de vídeo não encontrado."
 
-    try:
-        # --- ETAPA 1: INICIAR A SESSÃO DE UPLOAD ---
-        init_upload_url = f"{GRAPH_API_URL}/{ig_user_id}/media"
-        init_params = {
-            'media_type': 'REELS',
-            'upload_type': 'resumable',
-            'caption': caption,
-            'access_token': access_token
-        }
-        init_res = requests.post(init_upload_url, data=init_params)
-        init_data = init_res.json()
+    # Passo 1: Fazer o upload do vídeo para obter um creation_id
+    files = {'file': open(video_path, 'rb')}
+    params = {
+        'caption': caption,
+        'media_type': 'REELS',
+        'access_token': access_token
+    }
 
-        if 'id' not in init_data:
-            raise Exception(f"Erro ao iniciar o upload: {init_data.get('error', init_data)}")
+    upload_url = f"{GRAPH_API_URL}/{ig_user_id}/media"
+    res = requests.post(upload_url, files=files, data=params)
+    files['file'].close() # Fechamos o arquivo aqui para liberar recursos
 
-        creation_id = init_data['id']
+    # CORREÇÃO: Verificamos a resposta da API ANTES de tentar processar como JSON
+    if res.status_code != 200 or not res.text.strip().startswith('{'):
+        db.close()
+        # Retorna uma mensagem de erro mais clara, incluindo o que a API respondeu
+        return f"Erro na API da Meta ao tentar criar mídia. Status: {res.status_code}. Resposta: {res.text}"
 
-        # --- ETAPA 2: FAZER O UPLOAD DO ARQUIVO ---
-        upload_video_url = f"https://rupload.facebook.com/ig-api-upload/v19.0/{creation_id}"
-        
-        # A leitura do arquivo agora acontece ANTES de montar os cabeçalhos
-        with open(video_path, 'rb') as video_file:
-            video_data = video_file.read()
-            video_size = str(len(video_data)) # Calcula o tamanho do arquivo em bytes
+    res_json = res.json()
 
-            headers = {
-                'Authorization': f'OAuth {access_token}',
-                'Content-Type': 'application/octet-stream',
-                'Offset': '0',
-                'Content-Length': video_size # ADICIONADO: O cabeçalho Content-Length com o tamanho exato do vídeo
-            }
-            
-            # Os dados lidos (video_data) são enviados na requisição
-            upload_res = requests.post(upload_video_url, headers=headers, data=video_data)
+    if 'id' not in res_json:
+        db.close()
+        return f"Erro ao criar mídia: {res_json}"
 
-        upload_data = upload_res.json()
-        if not upload_data.get('success'):
-                # Adicionamos uma verificação mais robusta do erro que você recebeu
-                if upload_data.get('debug_info', {}).get('retriable') is False:
-                    raise Exception(f"Erro durante o upload do arquivo de vídeo: {upload_data}")
+    creation_id = res_json['id']
 
-        # --- ETAPA 3: VERIFICAR O STATUS DO UPLOAD ---
-        for _ in range(30): 
-            status_url = f"{GRAPH_API_URL}/{creation_id}?fields=status_code&access_token={access_token}"
-            status_res = requests.get(status_url)
-            status_data = status_res.json()
-            status_code = status_data.get('status_code')
-            if status_code == 'FINISHED':
-                break
-            if status_code == 'ERROR':
-                 raise Exception("Ocorreu um erro no processamento do vídeo pela Meta.")
-            time.sleep(5) 
-        else:
-            raise Exception(f"Processamento do vídeo demorou demais. Status: {status_code}")
+    # Passo 2: Publicar o vídeo usando o creation_id
+    publish_url = f"{GRAPH_API_URL}/{ig_user_id}/media_publish"
+    publish_res = requests.post(publish_url, data={'creation_id': creation_id, 'access_token': access_token})
+    publish_json = publish_res.json()
 
-        # --- ETAPA 4: PUBLICAR O CONTEÚDO ---
-        publish_url = f"{GRAPH_API_URL}/{ig_user_id}/media_publish"
-        publish_params = {
-            'creation_id': creation_id,
-            'access_token': access_token
-        }
-        publish_res = requests.post(publish_url, data=publish_params)
-        publish_data = publish_res.json()
+    status = "publicado" if 'id' in publish_json else "erro"
 
-        if 'id' not in publish_data:
-            raise Exception(f"Erro ao publicar a mídia: {publish_data}")
-
-        status = "publicado"
-        message = "Vídeo publicado com sucesso!"
-
-    except Exception as e:
-        status = "erro"
-        message = str(e)
-
-    # --- SALVAR O RESULTADO FINAL NO BANCO DE DADOS ---
+    # Salva ou atualiza o status no banco de dados
     if publicacao_id:
         cursor.execute(
             "UPDATE publicacoes SET status=%s, data_hora=%s WHERE id=%s",
@@ -133,19 +92,28 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
             "INSERT INTO publicacoes (usuario_id, ig_user_id, video, legenda, data_hora, status) VALUES (%s,%s,%s,%s,%s,%s)",
             (usuario_id, ig_user_id, video_path, caption, datetime.now(), status)
         )
+
     db.commit()
     db.close()
-    
-    return message
+
+    if status == "publicado":
+        return "Vídeo publicado com sucesso!"
+    else:
+        return f"Erro ao publicar: {publish_json}"
 
 def get_all_accounts(usuario_id=None):
-    """Retorna todas as contas cadastradas."""
+    """
+    Retorna todas as contas cadastradas.
+    Se usuario_id for fornecido, filtra apenas as contas desse usuário.
+    """
     db = get_db()
     cursor = db.cursor(dictionary=True)
+
     if usuario_id:
         cursor.execute("SELECT * FROM contas WHERE usuario_id=%s", (usuario_id,))
     else:
         cursor.execute("SELECT * FROM contas")
+
     contas = cursor.fetchall()
     db.close()
     return contas
