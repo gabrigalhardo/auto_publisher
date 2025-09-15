@@ -72,14 +72,12 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
         upload_video_url = f"https://graph.facebook.com/v19.0/{creation_id}"
         headers = {
             'Authorization': f'OAuth {access_token}',
-            'file_offset': '0' # Adicionado para indicar o início do arquivo
+            'Content-Type': 'application/octet-stream', # Informa que estamos enviando dados binários
+            'file_offset': '0'
         }
         with open(video_path, 'rb') as video_file:
-            upload_res = requests.post(upload_video_url, headers=headers, data=video_file)
-        
-        upload_data = upload_res.json()
-        if not upload_data.get('success'):
-             raise Exception(f"Erro durante o upload do arquivo de vídeo: {upload_data}")
+            video_data = video_file.read() # Lê os dados brutos do arquivo
+            upload_res = requests.post(upload_video_url, headers=headers, data=video_data)
 
 
         # --- ETAPA 3: VERIFICAR O STATUS DO UPLOAD ---
