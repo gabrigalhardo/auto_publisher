@@ -1,4 +1,4 @@
-# instagram_api.py (versão final com endpoint de inicialização de vídeo corrigido)
+# instagram_api.py (versão com a correção final do media_type)
 
 import os
 import mysql.connector
@@ -23,7 +23,7 @@ def get_db():
 
 def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, publicacao_id=None):
     """
-    Publica ou agenda um Reel no Instagram usando o fluxo de upload de vídeo dedicado.
+    Publica ou agenda um Reel no Instagram.
     """
     db = get_db()
     cursor = db.cursor(dictionary=True)
@@ -50,10 +50,10 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
         return "Arquivo de vídeo não encontrado."
 
     try:
-        # --- ETAPA 1: INICIAR A SESSÃO DE UPLOAD USANDO O ENDPOINT DE VÍDEO ---
+        # --- ETAPA 1: INICIAR A SESSÃO DE UPLOAD ---
         init_upload_url = f"{GRAPH_API_URL}/{ig_user_id}/media"
         init_params = {
-            'media_type': 'VIDEO', # Para este endpoint, usamos 'VIDEO' para iniciar
+            'media_type': 'REELS', # <<< A CORREÇÃO FINAL ESTÁ AQUI
             'upload_type': 'resumable',
             'access_token': access_token
         }
@@ -63,7 +63,6 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
         if 'id' not in init_data:
             raise Exception(f"Erro ao iniciar o upload: {init_data.get('error', init_data)}")
 
-        # A API nos dá o ID da sessão de upload
         creation_id = init_data['id']
 
         # --- ETAPA 2: FAZER O UPLOAD DO ARQUIVO ---
@@ -88,7 +87,6 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
                 raise Exception(f"Erro durante o upload do arquivo de vídeo: {upload_data}")
         
         # --- ETAPA 3: VERIFICAR O STATUS DO UPLOAD ---
-        # A verificação de status é crucial e pode levar tempo
         for _ in range(30): 
             status_url = f"{GRAPH_API_URL}/{creation_id}?fields=status_code&access_token={access_token}"
             status_res = requests.get(status_url)
@@ -107,7 +105,6 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
         publish_params = {
             'creation_id': creation_id,
             'caption': caption,
-            'media_type': 'REELS', # Especificamos que é um REELS na hora de publicar
             'access_token': access_token
         }
         publish_res = requests.post(publish_url, data=publish_params)
@@ -138,7 +135,6 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
     db.close()
     
     return message
-
 
 def get_all_accounts(usuario_id=None):
     """Retorna todas as contas cadastradas."""
