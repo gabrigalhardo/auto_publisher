@@ -1,4 +1,4 @@
-# instagram_api.py (versão corrigida com PUT no upload de vídeo)
+# instagram_api.py (versão com Content-Length corrigido)
 
 import os
 import mysql.connector
@@ -13,7 +13,7 @@ load_dotenv()
 GRAPH_API_URL = "https://graph.facebook.com/v19.0"
 
 def get_db():
-    """Função para criar a conexão com o banco de dados MySQL."""
+    """Cria a conexão com o banco de dados."""
     return mysql.connector.connect(
         host=os.getenv("DB_HOST"),
         user=os.getenv("DB_USER"),
@@ -22,9 +22,7 @@ def get_db():
     )
 
 def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, publicacao_id=None):
-    """
-    Publica ou agenda um Reel no Instagram.
-    """
+    """Publica ou agenda um Reel no Instagram."""
     db = get_db()
     cursor = db.cursor(dictionary=True)
 
@@ -70,18 +68,20 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
         
         with open(video_path, 'rb') as video_file:
             video_data = video_file.read()
+            video_size = str(len(video_data)) # Calcula o tamanho do arquivo
 
             headers = {
                 'Authorization': f'OAuth {access_token}',
                 'Content-Type': 'application/octet-stream',
+                'Content-Length': video_size, # <<< ADICIONADO: O cabeçalho que faltava
                 'Offset': '0'
             }
             
-            upload_res = requests.put(upload_video_url, headers=headers, data=video_data)
+            upload_res = requests.post(upload_video_url, headers=headers, data=video_data)
 
         upload_data = upload_res.json()
         if not upload_data.get('success'):
-            if upload_data.get('debug_info', {}).get('retriable') is False:
+             if upload_data.get('debug_info', {}).get('retriable') is False:
                 raise Exception(f"Erro durante o upload do arquivo de vídeo: {upload_data}")
         
         # --- ETAPA 3: VERIFICAR O STATUS DO UPLOAD ---
@@ -93,7 +93,7 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
             if status_code == 'FINISHED':
                 break
             if status_code == 'ERROR':
-                raise Exception("Ocorreu um erro no processamento do vídeo pela Meta.")
+                 raise Exception("Ocorreu um erro no processamento do vídeo pela Meta.")
             time.sleep(5) 
         else:
             raise Exception(f"Processamento do vídeo demorou demais. Status: {status_code}")
