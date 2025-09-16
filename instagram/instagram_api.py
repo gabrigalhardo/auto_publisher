@@ -1,4 +1,4 @@
-# instagram_api.py (versão com Content-Length corrigido)
+# instagram_api.py (versão final simplificada com multipart/form-data)
 
 import os
 import mysql.connector
@@ -48,41 +48,27 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
         return "Arquivo de vídeo não encontrado."
 
     try:
-        # --- ETAPA 1: INICIAR A SESSÃO DE UPLOAD ---
-        init_upload_url = f"{GRAPH_API_URL}/{ig_user_id}/media"
-        init_params = {
+        # --- ETAPA 1 e 2 COMBINADAS: Upload do vídeo via formulário ---
+        video_upload_url = f"{GRAPH_API_URL}/{ig_user_id}/media"
+        
+        payload = {
             'media_type': 'REELS',
-            'upload_type': 'resumable',
+            'caption': caption,
             'access_token': access_token
         }
-        init_res = requests.post(init_upload_url, data=init_params)
-        init_data = init_res.json()
-
-        if 'id' not in init_data:
-            raise Exception(f"Erro ao iniciar o upload: {init_data.get('error', init_data)}")
-
-        creation_id = init_data['id']
-
-        # --- ETAPA 2: FAZER O UPLOAD DO ARQUIVO ---
-        upload_video_url = f"https://rupload.facebook.com/ig-api-upload/v19.0/{creation_id}"
         
         with open(video_path, 'rb') as video_file:
-            video_data = video_file.read()
-            video_size = str(len(video_data)) # Calcula o tamanho do arquivo
-
-            headers = {
-                'Authorization': f'OAuth {access_token}',
-                'Content-Type': 'application/octet-stream',
-                'Content-Length': video_size, # <<< ADICIONADO: O cabeçalho que faltava
-                'Offset': '0'
+            files = {
+                'video': video_file
             }
-            
-            upload_res = requests.post(upload_video_url, headers=headers, data=video_data)
+            upload_res = requests.post(video_upload_url, data=payload, files=files)
 
         upload_data = upload_res.json()
-        if not upload_data.get('success'):
-             if upload_data.get('debug_info', {}).get('retriable') is False:
-                raise Exception(f"Erro durante o upload do arquivo de vídeo: {upload_data}")
+
+        if 'id' not in upload_data:
+            raise Exception(f"Erro ao criar o contêiner de mídia: {upload_data.get('error', upload_data)}")
+
+        creation_id = upload_data['id']
         
         # --- ETAPA 3: VERIFICAR O STATUS DO UPLOAD ---
         for _ in range(30): 
@@ -102,7 +88,6 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
         publish_url = f"{GRAPH_API_URL}/{ig_user_id}/media_publish"
         publish_params = {
             'creation_id': creation_id,
-            'caption': caption,
             'access_token': access_token
         }
         publish_res = requests.post(publish_url, data=publish_params)
