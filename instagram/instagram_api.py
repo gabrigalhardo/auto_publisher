@@ -1,4 +1,4 @@
-# instagram_api.py (versão final com a correção definitiva de envio de parâmetros)
+# instagram_api.py (versão final com envio de parâmetros via URL)
 
 import os
 import mysql.connector
@@ -36,8 +36,8 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
 
     if agendamento:
         cursor.execute(
-            "INSERT INTO publicacoes (usuario_id, ig_user_id, video, legenda, data_hora, status) VALUES (%s,%s,%s,%s,%s,%s)",
-            (usuario_id, ig_user_id, video_path, caption, agendamento, "agendado")
+            "INSERT INTO publicacoes (usuario_id, ig_user_id, video, legenda, data_hora, status, mensagem_erro) VALUES (%s,%s,%s,%s,%s,%s,%s)",
+            (usuario_id, ig_user_id, video_path, caption, agendamento, "agendado", None)
         )
         db.commit()
         db.close()
@@ -89,7 +89,7 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
         
         # --- ETAPA 3: VERIFICAR O STATUS DO UPLOAD ---
         for _ in range(30): 
-            status_url = f"{GRAPH_API_URL}/{creation_id}?fields=status_code&access_token={access_token}"
+            status_url = f"{GRAPH_API_URL}/{creation_id}?fields=status_code,status&access_token={access_token}"
             status_res = requests.get(status_url)
             status_data = status_res.json()
             status_code = status_data.get('status_code')
@@ -124,28 +124,14 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
     # --- SALVAR O RESULTADO FINAL NO BANCO DE DADOS ---
     if publicacao_id:
         cursor.execute(
-            "UPDATE publicacoes SET status=%s, data_hora=%s, mensagem_erro=NULL WHERE id=%s",
-            (status, datetime.now(), publicacao_id)
+            "UPDATE publicacoes SET status=%s, data_hora=%s, mensagem_erro=%s WHERE id=%s",
+            (status, datetime.now(), None if status == 'publicado' else message, publicacao_id)
         )
     else:
         cursor.execute(
             "INSERT INTO publicacoes (usuario_id, ig_user_id, video, legenda, data_hora, status, mensagem_erro) VALUES (%s,%s,%s,%s,%s,%s,%s)",
             (usuario_id, ig_user_id, video_path, caption, datetime.now(), status, None if status == 'publicado' else message)
         )
-    
-    # Se deu erro, atualizamos a mensagem de erro no banco
-    if status == "erro":
-        # Precisamos pegar o ID da publicação que acabamos de inserir
-        pub_id_to_update = publicacao_id
-        if not pub_id_to_update:
-            # Se foi uma nova inserção, pegamos o último ID inserido
-            cursor.execute("SELECT LAST_INSERT_ID() as id")
-            res = cursor.fetchone()
-            if res:
-                pub_id_to_update = res['id']
-        
-        if pub_id_to_update:
-            cursor.execute("UPDATE publicacoes SET mensagem_erro=%s WHERE id=%s", (message, pub_id_to_update))
 
     db.commit()
     db.close()
