@@ -1,4 +1,4 @@
-# instagram_api.py (versão com Content-Length corrigido)
+# instagram_api.py (versão com fluxo de upload oficial e robusto)
 
 import os
 import mysql.connector
@@ -68,12 +68,10 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
         
         with open(video_path, 'rb') as video_file:
             video_data = video_file.read()
-            video_size = str(len(video_data)) # Calcula o tamanho do arquivo
 
             headers = {
                 'Authorization': f'OAuth {access_token}',
                 'Content-Type': 'application/octet-stream',
-                'Content-Length': video_size, # <<< ADICIONADO: O cabeçalho que faltava
             }
             
             upload_res = requests.post(upload_url, headers=headers, data=video_data)
