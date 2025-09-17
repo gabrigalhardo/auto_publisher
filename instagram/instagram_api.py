@@ -49,17 +49,20 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
 
     try:
         # --- ETAPA 1 e 2 COMBINADAS: Upload do vídeo via formulário ---
+        # Esta é a forma mais simples e direta de enviar um vídeo
         video_upload_url = f"{GRAPH_API_URL}/{ig_user_id}/media"
         
         payload = {
-            'media_type': 'REELS',
+            'media_type': 'REELS', # Usando o tipo correto que a API exige
             'caption': caption,
             'access_token': access_token
         }
         
         with open(video_path, 'rb') as video_file:
             files = {
-                'video': video_file
+                # O nome do campo do arquivo DEVE ser 'video', mas o requests trata isso
+                # implicitamente. Vamos deixar explícito para clareza.
+                'source': video_file
             }
             upload_res = requests.post(video_upload_url, data=payload, files=files)
 
