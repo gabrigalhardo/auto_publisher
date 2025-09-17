@@ -1,4 +1,4 @@
-# instagram_api.py (versão final simplificada com multipart/form-data)
+# instagram_api.py (versão final com fluxo de upload oficial e robusto)
 
 import os
 import mysql.connector
@@ -48,30 +48,37 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
         return "Arquivo de vídeo não encontrado."
 
     try:
-        # --- ETAPA 1 e 2 COMBINADAS: Upload do vídeo via formulário ---
-        # Esta é a forma mais simples e direta de enviar um vídeo
-        video_upload_url = f"{GRAPH_API_URL}/{ig_user_id}/media"
-        
-        payload = {
-            'media_type': 'REELS', # Usando o tipo correto que a API exige
+        # --- ETAPA 1: Criar um contêiner de mídia vazio ---
+        container_url = f"{GRAPH_API_URL}/{ig_user_id}/media"
+        container_params = {
+            'media_type': 'REELS',
             'caption': caption,
             'access_token': access_token
         }
+        container_res = requests.post(container_url, data=container_params)
+        container_data = container_res.json()
+
+        if 'id' not in container_data:
+            raise Exception(f"Erro ao criar o contêiner de mídia: {container_data.get('error', container_data)}")
+
+        creation_id = container_data['id']
+
+        # --- ETAPA 2: Fazer o upload do arquivo para o contêiner ---
+        upload_url = f"https://graph.facebook.com/v19.0/{creation_id}"
         
         with open(video_path, 'rb') as video_file:
-            files = {
-                # O nome do campo do arquivo DEVE ser 'video', mas o requests trata isso
-                # implicitamente. Vamos deixar explícito para clareza.
-                'source': video_file
+            video_data = video_file.read()
+
+            headers = {
+                'Authorization': f'OAuth {access_token}',
+                'Content-Type': 'application/octet-stream',
             }
-            upload_res = requests.post(video_upload_url, data=payload, files=files)
-
+            
+            upload_res = requests.post(upload_url, headers=headers, data=video_data)
+        
         upload_data = upload_res.json()
-
-        if 'id' not in upload_data:
-            raise Exception(f"Erro ao criar o contêiner de mídia: {upload_data.get('error', upload_data)}")
-
-        creation_id = upload_data['id']
+        if not upload_data.get('success'):
+             raise Exception(f"Erro durante o upload do arquivo de vídeo: {upload_data}")
         
         # --- ETAPA 3: VERIFICAR O STATUS DO UPLOAD ---
         for _ in range(30): 
