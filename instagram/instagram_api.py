@@ -1,4 +1,4 @@
-# instagram_api.py (versão com fluxo de upload oficial e robusto)
+# instagram_api.py (versão final com publicação via video_url)
 
 import os
 import mysql.connector
@@ -7,6 +7,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 import time
 import json
+from flask import url_for # Importar url_for
 
 load_dotenv()
 
@@ -22,7 +23,7 @@ def get_db():
     )
 
 def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, publicacao_id=None):
-    """Publica ou agenda um Reel no Instagram."""
+    """Publica ou agenda um Reel no Instagram via URL."""
     db = get_db()
     cursor = db.cursor(dictionary=True)
 
@@ -30,11 +31,16 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
     conta = cursor.fetchone()
     if not conta:
         db.close()
-        return "Conta não encontrada ou não pertence a este usuário."
+        return "Conta não encontrada."
 
     access_token = conta['access_token']
 
+    # Gera a URL pública para o vídeo que foi salvo no nosso servidor
+    video_filename = os.path.basename(video_path)
+    public_video_url = url_for('uploaded_file', filename=video_filename, _external=True)
+
     if agendamento:
+        # No agendamento, salvamos o caminho do arquivo, não a URL, pois a URL pode mudar
         cursor.execute(
             "INSERT INTO publicacoes (usuario_id, ig_user_id, video, legenda, data_hora, status) VALUES (%s,%s,%s,%s,%s,%s)",
             (usuario_id, ig_user_id, video_path, caption, agendamento, "agendado")
@@ -43,15 +49,12 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
         db.close()
         return "Vídeo agendado com sucesso!"
 
-    if not os.path.exists(video_path):
-        db.close()
-        return "Arquivo de vídeo não encontrado."
-
     try:
-        # --- ETAPA 1: Criar um contêiner de mídia vazio ---
+        # --- ETAPA 1: Criar o contêiner de mídia com a video_url ---
         container_url = f"{GRAPH_API_URL}/{ig_user_id}/media"
         container_params = {
             'media_type': 'REELS',
+            'video_url': public_video_url, # Usamos a URL pública do nosso vídeo
             'caption': caption,
             'access_token': access_token
         }
@@ -62,25 +65,8 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
             raise Exception(f"Erro ao criar o contêiner de mídia: {container_data.get('error', container_data)}")
 
         creation_id = container_data['id']
-
-        # --- ETAPA 2: Fazer o upload do arquivo para o contêiner ---
-        upload_url = f"https://graph.facebook.com/v19.0/{creation_id}"
         
-        with open(video_path, 'rb') as video_file:
-            video_data = video_file.read()
-
-            headers = {
-                'Authorization': f'OAuth {access_token}',
-                'Content-Type': 'application/octet-stream',
-            }
-            
-            upload_res = requests.post(upload_url, headers=headers, data=video_data)
-        
-        upload_data = upload_res.json()
-        if not upload_data.get('success'):
-             raise Exception(f"Erro durante o upload do arquivo de vídeo: {upload_data}")
-        
-        # --- ETAPA 3: VERIFICAR O STATUS DO UPLOAD ---
+        # --- ETAPA 2: VERIFICAR O STATUS DO UPLOAD ---
         for _ in range(30): 
             status_url = f"{GRAPH_API_URL}/{creation_id}?fields=status_code&access_token={access_token}"
             status_res = requests.get(status_url)
@@ -89,12 +75,12 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
             if status_code == 'FINISHED':
                 break
             if status_code == 'ERROR':
-                 raise Exception("Ocorreu um erro no processamento do vídeo pela Meta.")
+                 raise Exception(f"Ocorreu um erro no processamento do vídeo pela Meta.")
             time.sleep(5) 
         else:
             raise Exception(f"Processamento do vídeo demorou demais. Status: {status_code}")
 
-        # --- ETAPA 4: PUBLICAR O CONTEÚDO ---
+        # --- ETAPA 3: PUBLICAR O CONTEÚDO ---
         publish_url = f"{GRAPH_API_URL}/{ig_user_id}/media_publish"
         publish_params = {
             'creation_id': creation_id,
