@@ -165,21 +165,16 @@ def upload_video():
     legenda = request.form.get("legenda")
     agendamento = request.form.get("agendamento")
     selected_ig_user_id = request.form.get("conta_id") 
-
     if not video_file or not legenda or not selected_ig_user_id:
         flash("Preencha todos os campos e selecione a conta!")
         return redirect(url_for("dashboard"))
-
     filename = secure_filename(f"{int(datetime.now().timestamp())}-{video_file.filename}")
     video_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
     video_file.save(video_path)
-
     result = publish_reel(current_user.id, selected_ig_user_id, video_path, legenda, agendamento)
     flash(result)
-
     return redirect(url_for("dashboard"))
 
-# ================= PUBLICAÇÕES =================
 @app.route('/publicacoes')
 @login_required
 def publicacoes():
@@ -196,7 +191,6 @@ def publicacoes():
     db.close()
     return render_template("publicacoes.html", publicacoes=publicacoes)
 
-# ================= CONTAS (FLUXO OAUTH) =================
 @app.route("/contas")
 @login_required
 def contas():
@@ -213,14 +207,8 @@ def iniciar_conexao_instagram():
     meta_app_id = os.getenv("META_APP_ID")
     redirect_uri = url_for('callback', _external=True)
     scopes = "instagram_basic,pages_show_list,instagram_content_publish,business_management"
-    
-    auth_url = (
-        f"https://www.facebook.com/v19.0/dialog/oauth?"
-        f"client_id={meta_app_id}"
-        f"&redirect_uri={redirect_uri}"
-        f"&scope={scopes}"
-        f"&response_type=code"
-    )
+    auth_url = (f"https://www.facebook.com/v19.0/dialog/oauth?"
+                f"client_id={meta_app_id}&redirect_uri={redirect_uri}&scope={scopes}&response_type=code")
     return redirect(auth_url)
 
 @app.route("/callback")
@@ -235,54 +223,55 @@ def callback():
     meta_app_secret = os.getenv("META_APP_SECRET")
     redirect_uri = url_for('callback', _external=True)
 
-    # 1. Trocar código por token de curta duração
-    token_url = (
-        f"https://graph.facebook.com/v19.0/oauth/access_token?"
-        f"client_id={meta_app_id}&redirect_uri={redirect_uri}"
-        f"&client_secret={meta_app_secret}&code={code}"
-    )
-    token_data = requests.get(token_url).json()
-    if 'error' in token_data:
-        flash(f"Erro ao obter o token: {token_data['error']['message']}")
-        return redirect(url_for('contas'))
-    
-    short_lived_token = token_data['access_token']
+    # --- LÓGICA DE OBTENÇÃO DE TOKEN REFORÇADA ---
+    try:
+        # 1. Trocar código por token de curta duração
+        token_url = (f"https://graph.facebook.com/v19.0/oauth/access_token?"
+                     f"client_id={meta_app_id}&redirect_uri={redirect_uri}"
+                     f"&client_secret={meta_app_secret}&code={code}")
+        token_res = requests.get(token_url)
+        token_res.raise_for_status() # Lança um erro se a requisição falhar
+        token_data = token_res.json()
+        if 'error' in token_data:
+            raise Exception(f"Erro ao obter token de curta duração: {token_data['error']['message']}")
+        
+        short_lived_token = token_data['access_token']
 
-    # 2. Trocar token de curta duração por um de longa duração
-    long_lived_url = (
-        f"https://graph.facebook.com/oauth/access_token?"
-        f"grant_type=fb_exchange_token&client_id={meta_app_id}"
-        f"&client_secret={meta_app_secret}&fb_exchange_token={short_lived_token}"
-    )
-    long_lived_data = requests.get(long_lived_url).json()
-    long_lived_token = long_lived_data.get('access_token', short_lived_token)
+        # 2. Trocar token de curta duração por um de longa duração
+        long_lived_url = (f"https://graph.facebook.com/oauth/access_token?"
+                          f"grant_type=fb_exchange_token&client_id={meta_app_id}"
+                          f"&client_secret={meta_app_secret}&fb_exchange_token={short_lived_token}")
+        long_lived_res = requests.get(long_lived_url)
+        long_lived_res.raise_for_status()
+        long_lived_data = long_lived_res.json()
+        if 'error' in long_lived_data:
+            raise Exception(f"Erro ao obter token de longa duração: {long_lived_data['error']['message']}")
 
-    # 3. Obter páginas do usuário
-    pages_url = f"https://graph.facebook.com/me/accounts?access_token={long_lived_token}"
-    pages_data = requests.get(pages_url).json().get('data', [])
-    if not pages_data:
-        flash("Nenhuma página do Facebook encontrada. É necessário ter uma página vinculada a uma conta do Instagram Business.")
-        return redirect(url_for('contas'))
+        long_lived_token = long_lived_data['access_token']
 
-    # 4. Encontrar conta do Instagram e salvar
-    found_ig_account = False
-    for page in pages_data:
-        page_id = page['id']
-        ig_url = (
-            f"https://graph.facebook.com/v19.0/{page_id}?"
-            f"fields=instagram_business_account{{id,username}}"
-            f"&access_token={long_lived_token}"
-        )
-        ig_data = requests.get(ig_url).json()
+        # 3. Obter páginas do usuário
+        pages_url = f"https://graph.facebook.com/me/accounts?access_token={long_lived_token}"
+        pages_data = requests.get(pages_url).json().get('data', [])
+        if not pages_data:
+            flash("Nenhuma página do Facebook encontrada. É necessário ter uma página vinculada a uma conta do Instagram Business.")
+            return redirect(url_for('contas'))
 
-        if 'instagram_business_account' in ig_data:
-            ig_account = ig_data['instagram_business_account']
-            ig_user_id = ig_account['id']
-            ig_username = ig_account['username']
+        # 4. Encontrar conta do Instagram e salvar
+        found_ig_account = False
+        for page in pages_data:
+            page_id = page['id']
+            ig_url = (f"https://graph.facebook.com/v19.0/{page_id}?"
+                      f"fields=instagram_business_account{{id,username}}"
+                      f"&access_token={long_lived_token}")
+            ig_data = requests.get(ig_url).json()
 
-            db = get_db()
-            cursor = db.cursor()
-            try:
+            if 'instagram_business_account' in ig_data:
+                ig_account = ig_data['instagram_business_account']
+                ig_user_id = ig_account['id']
+                ig_username = ig_account['username']
+
+                db = get_db()
+                cursor = db.cursor()
                 cursor.execute(
                     """
                     INSERT INTO contas (usuario_id, username, ig_user_id, access_token) 
@@ -292,15 +281,17 @@ def callback():
                     (current_user.id, ig_username, ig_user_id, long_lived_token)
                 )
                 db.commit()
+                db.close()
                 flash(f"Conta do Instagram '{ig_username}' conectada/atualizada com sucesso!")
                 found_ig_account = True
-            except mysql.connector.Error as err:
-                flash(f"Erro ao salvar a conta: {err}")
-            finally:
-                db.close()
-    
-    if not found_ig_account:
-        flash("Nenhuma conta do Instagram Business foi encontrada vinculada às suas páginas do Facebook.")
+        
+        if not found_ig_account:
+            flash("Nenhuma conta do Instagram Business foi encontrada vinculada às suas páginas do Facebook.")
+
+    except requests.exceptions.RequestException as e:
+        flash(f"Erro de rede ao comunicar com a API da Meta: {e}")
+    except Exception as e:
+        flash(f"Um erro inesperado ocorreu: {e}")
 
     return redirect(url_for('contas'))
 
