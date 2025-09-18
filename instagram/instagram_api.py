@@ -1,4 +1,4 @@
-# instagram_api.py (versão com urllib para o upload do vídeo)
+# instagram_api.py (versão final com publicação via video_url)
 
 import os
 import mysql.connector
@@ -6,8 +6,7 @@ import requests
 from datetime import datetime
 from dotenv import load_dotenv
 import time
-import json
-import urllib.request # <<< Importamos a nova biblioteca
+from flask import url_for # Importante para criar a URL pública
 
 load_dotenv()
 
@@ -23,7 +22,7 @@ def get_db():
     )
 
 def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, publicacao_id=None):
-    """Publica ou agenda um Reel no Instagram."""
+    """Publica ou agenda um Reel no Instagram usando o método video_url."""
     db = get_db()
     cursor = db.cursor(dictionary=True)
 
@@ -35,6 +34,7 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
 
     access_token = conta['access_token']
 
+    # Se for agendamento, apenas salvamos no banco para ser processado depois
     if agendamento:
         cursor.execute(
             "INSERT INTO publicacoes (usuario_id, ig_user_id, video, legenda, data_hora, status, mensagem_erro) VALUES (%s,%s,%s,%s,%s,%s,%s)",
@@ -44,56 +44,41 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
         db.close()
         return "Vídeo agendado com sucesso!"
 
+    # Se não for agendamento, publica imediatamente
     if not os.path.exists(video_path):
         db.close()
         return "Arquivo de vídeo não encontrado."
 
     try:
-        # --- ETAPA 1: INICIAR A SESSÃO DE UPLOAD ---
-        init_upload_url = f"{GRAPH_API_URL}/{ig_user_id}/media"
-        init_params = {
+        # --- ETAPA 1: Criar a URL pública para o nosso vídeo salvo ---
+        # O nome do arquivo é extraído do caminho completo
+        video_filename = os.path.basename(video_path)
+        # O _external=True é crucial para gerar a URL completa (https://...)
+        public_video_url = url_for('uploaded_file', filename=video_filename, _external=True)
+
+        # --- ETAPA 2: Criar o contêiner de mídia passando a video_url ---
+        container_url = f"{GRAPH_API_URL}/{ig_user_id}/media"
+        container_params = {
             'media_type': 'REELS',
-            'upload_type': 'resumable',
+            'video_url': public_video_url,
             'caption': caption,
             'access_token': access_token
         }
-        init_res = requests.post(init_upload_url, params=init_params)
-        init_data = init_res.json()
+        container_res = requests.post(container_url, data=container_params)
+        container_data = container_res.json()
 
-        if 'id' not in init_data:
-            raise Exception(f"Erro ao iniciar o upload: {init_data.get('error', init_data)}")
+        if 'id' not in container_data:
+            raise Exception(f"Erro ao criar o contêiner de mídia: {container_data.get('error', container_data)}")
 
-        creation_id = init_data['id']
-
-        # --- ETAPA 2: FAZER O UPLOAD DO ARQUIVO (usando urllib) ---
-        upload_video_url = f"https://rupload.facebook.com/ig-api-upload/v19.0/{creation_id}"
+        creation_id = container_data['id']
         
-        with open(video_path, 'rb') as video_file:
-            video_data = video_file.read()
-            video_size = str(len(video_data))
-            
-            # Criamos a requisição manualmente com urllib
-            req = urllib.request.Request(upload_video_url, data=video_data, method='POST')
-            req.add_header('Authorization', f'OAuth {access_token}')
-            req.add_header('Content-Type', 'application/octet-stream')
-            req.add_header('Content-Length', video_size)
-            req.add_header('Offset', '0')
-            
-            # Enviamos a requisição e lemos a resposta
-            with urllib.request.urlopen(req) as response:
-                response_text = response.read().decode('utf-8')
-                upload_data = json.loads(response_text)
-
-        if not upload_data.get('success'):
-             if upload_data.get('debug_info', {}).get('retriable') is False:
-                raise Exception(f"Erro durante o upload do arquivo de vídeo: {upload_data}")
-        
-        # --- ETAPA 3: VERIFICAR O STATUS DO UPLOAD ---
+        # --- ETAPA 3: VERIFICAR O STATUS (A Meta vai baixar e processar o vídeo) ---
         for _ in range(30): 
-            status_url = f"{GRAPH_API_URL}/{creation_id}?fields=status_code&access_token={access_token}"
+            status_url = f"{GRAPH_API_URL}/{creation_id}?fields=status_code,status&access_token={access_token}"
             status_res = requests.get(status_url)
             status_data = status_res.json()
             status_code = status_data.get('status_code')
+            
             if status_code == 'FINISHED':
                 break
             if status_code == 'ERROR':
@@ -134,17 +119,15 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
             (usuario_id, ig_user_id, video_path, caption, datetime.now(), status, None if status == 'publicado' else message)
         )
     
-    # Se deu erro, atualizamos a mensagem de erro no banco
-    if status == "erro":
-        pub_id_to_update = publicacao_id
-        if not pub_id_to_update:
-            cursor.execute("SELECT LAST_INSERT_ID() as id")
-            res = cursor.fetchone()
-            if res:
-                pub_id_to_update = res['id']
-        
-        if pub_id_to_update:
-            cursor.execute("UPDATE publicacoes SET mensagem_erro=%s WHERE id=%s", (message, pub_id_to_update))
+    # Se deu erro, e foi uma nova publicação, precisamos garantir que a mensagem de erro seja salva
+    if status == "erro" and not publicacao_id:
+        # Pegamos o ID da publicação que acabamos de inserir
+        last_id = cursor.lastrowid
+        if last_id:
+            cursor.execute(
+                "UPDATE publicacoes SET mensagem_erro=%s WHERE id=%s",
+                (message, last_id)
+            )
 
     db.commit()
     db.close()

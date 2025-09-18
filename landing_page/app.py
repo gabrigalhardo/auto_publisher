@@ -26,8 +26,8 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 # ================= ROTA PARA SERVIR ARQUIVOS =================
-# Necessário para que a API da Meta possa baixar o vídeo através de uma URL
-@app.route('/uploads/<filename>')
+# ESSENCIAL: Torna os vídeos enviados acessíveis por uma URL pública
+@app.route('/uploads/<path:filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
