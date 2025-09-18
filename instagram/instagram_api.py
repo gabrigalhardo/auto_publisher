@@ -1,4 +1,4 @@
-# instagram_api.py (versão final com envio de parâmetros via URL)
+# instagram_api.py (versão com urllib para o upload do vídeo)
 
 import os
 import mysql.connector
@@ -7,6 +7,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 import time
 import json
+import urllib.request # <<< Importamos a nova biblioteca
 
 load_dotenv()
 
@@ -56,8 +57,6 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
             'caption': caption,
             'access_token': access_token
         }
-        
-        # Enviamos os parâmetros na URL (params) para garantir que sejam lidos pela API
         init_res = requests.post(init_upload_url, params=init_params)
         init_data = init_res.json()
 
@@ -66,30 +65,32 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
 
         creation_id = init_data['id']
 
-        # --- ETAPA 2: FAZER O UPLOAD DO ARQUIVO ---
+        # --- ETAPA 2: FAZER O UPLOAD DO ARQUIVO (usando urllib) ---
         upload_video_url = f"https://rupload.facebook.com/ig-api-upload/v19.0/{creation_id}"
         
         with open(video_path, 'rb') as video_file:
             video_data = video_file.read()
             video_size = str(len(video_data))
-
-            headers = {
-                'Authorization': f'OAuth {access_token}',
-                'Content-Type': 'application/octet-stream',
-                'Content-Length': video_size,
-                'Offset': '0'
-            }
             
-            upload_res = requests.post(upload_video_url, headers=headers, data=video_data)
+            # Criamos a requisição manualmente com urllib
+            req = urllib.request.Request(upload_video_url, data=video_data, method='POST')
+            req.add_header('Authorization', f'OAuth {access_token}')
+            req.add_header('Content-Type', 'application/octet-stream')
+            req.add_header('Content-Length', video_size)
+            req.add_header('Offset', '0')
+            
+            # Enviamos a requisição e lemos a resposta
+            with urllib.request.urlopen(req) as response:
+                response_text = response.read().decode('utf-8')
+                upload_data = json.loads(response_text)
 
-        upload_data = upload_res.json()
         if not upload_data.get('success'):
              if upload_data.get('debug_info', {}).get('retriable') is False:
                 raise Exception(f"Erro durante o upload do arquivo de vídeo: {upload_data}")
         
         # --- ETAPA 3: VERIFICAR O STATUS DO UPLOAD ---
         for _ in range(30): 
-            status_url = f"{GRAPH_API_URL}/{creation_id}?fields=status_code,status&access_token={access_token}"
+            status_url = f"{GRAPH_API_URL}/{creation_id}?fields=status_code&access_token={access_token}"
             status_res = requests.get(status_url)
             status_data = status_res.json()
             status_code = status_data.get('status_code')
@@ -132,6 +133,18 @@ def publish_reel(usuario_id, ig_user_id, video_path, caption, agendamento=None, 
             "INSERT INTO publicacoes (usuario_id, ig_user_id, video, legenda, data_hora, status, mensagem_erro) VALUES (%s,%s,%s,%s,%s,%s,%s)",
             (usuario_id, ig_user_id, video_path, caption, datetime.now(), status, None if status == 'publicado' else message)
         )
+    
+    # Se deu erro, atualizamos a mensagem de erro no banco
+    if status == "erro":
+        pub_id_to_update = publicacao_id
+        if not pub_id_to_update:
+            cursor.execute("SELECT LAST_INSERT_ID() as id")
+            res = cursor.fetchone()
+            if res:
+                pub_id_to_update = res['id']
+        
+        if pub_id_to_update:
+            cursor.execute("UPDATE publicacoes SET mensagem_erro=%s WHERE id=%s", (message, pub_id_to_update))
 
     db.commit()
     db.close()
